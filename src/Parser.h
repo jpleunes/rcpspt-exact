@@ -30,7 +30,7 @@ using namespace std;
 namespace RcpsptExact {
 
 /**
- * Class containing functions for parsing instances of the RCPSP/t
+ * Class containing functions for parsing instances of the RCPSP/t.
  */
 class Parser {
 public:

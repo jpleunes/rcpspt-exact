@@ -35,7 +35,7 @@ static void tokenize(const string& str, vector<string>& out) {
     int n = (int)str.size();
     while (i < n) {
         while ((str[i] == ' ' || str[i] == '\n' || str[i] == '\r') && i < n) i++;
-        std::string token;
+        string token;
         while (str[i] != ' ' && str[i] != '\n' && str[i] != '\r' && i < n) token.push_back(str[i++]);
         if (!token.empty()) out.push_back(token);
     }
@@ -59,9 +59,9 @@ Problem Parser::parseProblemInstance(ifstream& input) {
 
         tokenize(line, tokens);
         if (section == 2) {
-            if (tokens.front() == "jobs") njobs = std::stoi(tokens.back());
-            else if (tokens.front() == "horizon") horizon = std::stoi(tokens.back());
-            else if (tokens.back() == "R") nresources = std::stoi(tokens[tokens.size() - 2]);
+            if (tokens.front() == "jobs") njobs = stoi(tokens.back());
+            else if (tokens.front() == "horizon") horizon = stoi(tokens.back());
+            else if (tokens.back() == "R") nresources = stoi(tokens[tokens.size() - 2]);
             continue;
         }
     }
@@ -84,11 +84,11 @@ Problem Parser::parseProblemInstance(ifstream& input) {
         tokenize(line, tokens);
         if (section == 4) { // Section "PRECEDENCE RELATIONS"
             if (tokens.front() == "PRECEDENCE" || tokens.front() == "jobnr.") continue;
-            int job = std::stoi(tokens.front()) - 1; // Subtract 1 for zero-indexed array indexing
-            int nsucc = std::stoi(tokens[2]);
+            int job = stoi(tokens.front()) - 1; // Subtract 1 for zero-indexed array indexing
+            int nsucc = stoi(tokens[2]);
             result.successors[job].reserve(nsucc);
             for (int i = 0; i < nsucc; i++) {
-                int successor = std::stoi(tokens[3 + i]) - 1;
+                int successor = stoi(tokens[3 + i]) - 1;
                 result.successors[job].push_back(successor);
                 result.predecessors[successor].push_back(job);
             }
@@ -98,30 +98,30 @@ Problem Parser::parseProblemInstance(ifstream& input) {
             if (tokens.front()[0] == '-') continue;
             if (tokens.front() == "jobnr.") continue;
             if (currResource == 0 && tokens.size() <= 3) { // This is a dummy job
-                currJob = std::stoi(tokens.front()) - 1;
+                currJob = stoi(tokens.front()) - 1;
                 result.durations.push_back(0);
                 for (int i = 0; i < nresources; i++) result.requests[currJob][i].reserve(0);
                 continue;
             }
             if (currResource == 0) { // First line for a job
-                currJob = std::stoi(tokens.front()) - 1;
-                int duration = std::stoi(tokens[2]);
+                currJob = stoi(tokens.front()) - 1;
+                int duration = stoi(tokens[2]);
                 result.durations.push_back(duration);
                 result.requests[currJob][currResource].reserve(duration);
                 for (int i = 0; i < duration; i++)
-                    result.requests[currJob][currResource].push_back(std::stoi(tokens[3 + i]));
+                    result.requests[currJob][currResource].push_back(stoi(tokens[3 + i]));
             }
             else { // Remaining lines for a job
                 result.requests[currJob][currResource].reserve(result.durations[currJob]);
                 for (int i = 0; i < result.durations[currJob]; i++)
-                    result.requests[currJob][currResource].push_back(std::stoi(tokens[i]));
+                    result.requests[currJob][currResource].push_back(stoi(tokens[i]));
             }
             currResource = (currResource + 1) % nresources;
         }
         else if (section == 6) { // Section "RESOURCEAVAILABILITIES"
             if ((int)tokens.size() <= 2 * nresources) continue;
-            for (std::string& token : tokens)
-                result.capacities[currResource].push_back(std::stoi(token));
+            for (string& token : tokens)
+                result.capacities[currResource].push_back(stoi(token));
             currResource = (currResource + 1) % nresources;
         }
     }

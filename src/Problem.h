@@ -25,6 +25,8 @@ SOFTWARE.
 
 #include <vector>
 
+using namespace std;
+
 namespace RcpsptExact {
 
 /**
@@ -39,14 +41,14 @@ public:
 
     // Data
 
-    const int njobs;                                     // Number of activities (including dummy start and end activities)
-    const int horizon;                                   // Planning horizon T
-    const int nresources;                                // Number of renewable resources
-    std::vector<std::vector<int>> successors;            // List of successors for each activity
-    std::vector<std::vector<int>> predecessors;          // List of predecessors for each activity (for backwards traversal of the precedence graph)
-    std::vector<int> durations;                          // Duration for each activity
-    std::vector<std::vector<std::vector<int>>> requests; // Request per time step, per resource, per activity
-    std::vector<std::vector<int>> capacities;            // Capacity for each time step, per resource
+    const int njobs;                      // Number of activities (including dummy start and end activities)
+    const int horizon;                    // Planning horizon T
+    const int nresources;                 // Number of renewable resources
+    vector<vector<int>> successors;       // List of successors for each activity
+    vector<vector<int>> predecessors;     // List of predecessors for each activity (for backwards traversal of the precedence graph)
+    vector<int> durations;                // Duration for each activity
+    vector<vector<vector<int>>> requests; // Request per time step, per resource, per activity
+    vector<vector<int>> capacities;       // Capacity for each time step, per resource
 };
 }
 
