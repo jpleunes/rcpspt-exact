@@ -4,7 +4,7 @@ BUILD_DIR=build/
 CFLAGS=-Wall -std=c++17
 
 TARGET = $(BUILD_DIR)rcpspt-exact
-OBJS:=$(BUILD_DIR)Main.o $(BUILD_DIR)Problem.o
+OBJS:=$(BUILD_DIR)Main.o $(BUILD_DIR)Problem.o $(BUILD_DIR)Parser.o
 
 all : $(TARGET)
 

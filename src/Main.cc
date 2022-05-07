@@ -21,11 +21,16 @@ SOFTWARE.
 **************************************************************************************************/
 
 #include <iostream>
+#include <fstream>
 
 #include "Problem.h"
+#include "Parser.h"
 
 using namespace RcpsptExact;
 
 int main(int argc, char** argv) {
+    std::ifstream inpFile(argv[1]);
+    Problem test = Parser::parseProblemInstance(inpFile);
+    inpFile.close();
     return 0;
 }
