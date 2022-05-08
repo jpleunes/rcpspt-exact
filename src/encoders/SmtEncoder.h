@@ -1,4 +1,4 @@
-/*****************************************************************************************[Main.cc]
+/************************************************************************************[SmtEncoder.h]
 Copyright (c) 2022, Jelle Pleunes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,21 +20,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
-#include <iostream>
-#include <fstream>
+#ifndef RCPSPT_EXACT_SMTENCODER_H
+#define RCPSPT_EXACT_SMTENCODER_H
 
-#include "Problem.h"
-#include "Parser.h"
-#include "encoders/SmtEncoder.h"
+#include <vector>
 
-using namespace RcpsptExact;
+#include "../Problem.h"
 
-int main(int argc, char** argv) {
-    std::ifstream inpFile(argv[1]);
-    Problem test = Parser::parseProblemInstance(inpFile);
-    inpFile.close();
+using namespace std;
 
-    SmtEncoder(test).encode();
+namespace RcpsptExact {
 
-    return 0;
+/**
+ * Class for encoding an instance of Problem into SMT.
+ */
+class SmtEncoder {
+public:
+    // Constructor
+    SmtEncoder(Problem& p)
+            : problem(p) {
+        preprocess();
+    }
+    // Destructor
+    ~SmtEncoder() = default;
+
+    /**
+     * TODO
+     */
+    void encode();
+
+private:
+    Problem& problem;
+
+    vector<vector<int>> Estar; // List of successors for each activity, in the extended precedence graph
+    vector<vector<int>> l;     // Time lags for all pairs of activities
+
+    void floydWarshall();
+
+    /**
+     * Perform preprocessing to reduce the amount of variables in the final encoding.
+     */
+    void preprocess();
+};
 }
+
+#endif //RCPSPT_EXACT_SMTENCODER_H
