@@ -38,7 +38,8 @@ class SmtEncoder {
 public:
     // Constructor
     SmtEncoder(Problem& p)
-            : problem(p) {
+            : problem(p),
+              UB(problem.horizon) {
         preprocess();
     }
     // Destructor
@@ -54,6 +55,10 @@ private:
 
     vector<vector<int>> Estar; // List of successors for each activity, in the extended precedence graph
     vector<vector<int>> l;     // Time lags for all pairs of activities
+
+    int UB; // The upper bound for the makespan that is currently being used TODO: calculate better UB using PSGS and afterwards update LS and LC
+
+    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
     void floydWarshall();
 

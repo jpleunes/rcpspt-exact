@@ -100,7 +100,19 @@ void SmtEncoder::preprocess() {
     // Rerun Floyd-Warshall to propagate updates to time lags
     floydWarshall();
 
-    // TODO: time windows
+    // Set the time windows for the activities
+
+    ES.reserve(problem.njobs);
+    EC.reserve(problem.njobs);
+    LS.reserve(problem.njobs);
+    LC.reserve(problem.njobs);
+
+    for (int i = 0; i < problem.njobs; i++) {
+        ES.push_back(l[0][i]);
+        EC.push_back(l[0][i] + problem.durations[i]);
+        LS.push_back(UB - l[i][problem.njobs - 1]);
+        LC.push_back(UB - l[i][problem.njobs - 1] + problem.durations[i]);
+    }
 }
 
 void SmtEncoder::encode() {
