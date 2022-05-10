@@ -80,8 +80,8 @@ void SmtEncoder::preprocess() {
 
     // Update time lags
     for (int i = 0; i < problem.njobs; i++) {
-        for (int j = 0; j < problem.njobs; j++) {
-            if (l[i][j] == INT32_MAX / 2) continue;
+        for (int j : Estar[i]) {
+            if (i == j) continue;
             int maxRlb = -1;
             for (int k = 0; k < problem.nresources; k++) {
                 int rlb = 0;
@@ -116,30 +116,123 @@ void SmtEncoder::preprocess() {
 }
 
 void SmtEncoder::encode() {
-    // Trying out the Yices library:
+    // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md)
 
     yices_init();
-    term_t x = yices_new_uninterpreted_term(yices_bool_type());
-    yices_set_term_name(x, "x");
-    term_t y = yices_new_uninterpreted_term(yices_bool_type());
-    yices_set_term_name(y, "y");
-    term_t f = yices_or2(x, y);
-    yices_pp_term(stdout, f, 80, 20, 0);
+
+    // Create the variables
+
+    // S_i: start time of activity i
+    vector<term_t> S;
+    for (int i = 0; i < problem.njobs; i++) {
+        term_t startt = yices_new_uninterpreted_term(yices_int_type());
+        S.push_back(startt);
+    }
+
+    // y_(i,t): boolean representing whether activity i starts at time t in STW(i)
+    vector<vector<term_t>> y;
+    for (int i = 0; i < problem.njobs; i++) {
+        y.emplace_back();
+        for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
+            term_t startb = yices_new_uninterpreted_term(yices_bool_type());
+            y[i].push_back(startb);
+        }
+    }
+
+    // Add precedence constraints
+
+    vector<term_t> precedenceConstrs;
+
+    // Initial dummy activity starts at 0
+    precedenceConstrs.push_back(yices_arith_eq0_atom(S[0]));
+
+    // Start variables must be within time windows
+    for (int i = 0; i < problem.njobs; i++)
+        precedenceConstrs.push_back(yices_arith_geq_atom(S[i], yices_int32(ES[i])));
+    for (int i = 0; i < problem.njobs; i++)
+        precedenceConstrs.push_back(yices_arith_leq_atom(S[i], yices_int32(LS[i])));
+
+    // Enforce extended precedences
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int j : Estar[i]) {
+            if (i == j) continue;
+            precedenceConstrs.push_back(yices_arith_geq_atom(yices_sub(S[j], S[i]), yices_int32(l[i][j])));
+        }
+    }
+
+    // Enforce consistency for y_(i,t) variables
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int t = 0; t <= LS[i] - ES[i]; i++) { // t in STW(i)
+            // y_(i,t) <=> S_i is encoded into (y_(i,t) => S_i) ^ (S_i => y_(i,t)), which is in turn
+            // encoded into (~y_(i,t) v S_i) ^ (~S_i v y_(i,t))
+            precedenceConstrs.push_back(yices_and2(yices_or2(yices_not(y[i][t]), yices_arith_eq_atom(S[i], yices_int32(t))),
+                                                   yices_or2(yices_not(yices_arith_eq_atom(S[i], yices_int32(t))), y[i][t])));
+        }
+    }
+
+    // Add resource constraints
+
+    vector<term_t> resourceConstrs;
+
+    // TODO
+
+    // Pass all constraints to Yices
+
+    int32_t code;
+
+    term_t f_precedence = yices_and(precedenceConstrs.size(), &precedenceConstrs.front());
+    term_t f_resource = yices_and(resourceConstrs.size(), &resourceConstrs.front());
+    term_t f_final = yices_and2(f_precedence, f_resource);
 
     context_t* ctx = yices_new_context(NULL);
-    int32_t code = yices_assert_formula(ctx, f);
 
-    switch(yices_check_context(ctx, NULL)) {
-        case STATUS_SAT:
-            model_t* model = yices_get_model(ctx, true);
-            code = yices_pp_model(stdout, model, 80, 4, 0);
-            int32_t vx, vy;
-            yices_get_bool_value(model, x, &vx);
-            yices_get_bool_value(model, y, &vy);
-            std::cout << "x, y: " << vx << ", " << vy << std::endl;
+    code = yices_assert_formula(ctx, f_final);
+    if (code < 0) {
+        std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
+        yices_print_error(stderr);
+    }
+
+    switch (yices_check_context(ctx, NULL)) {
+        case STATUS_SAT: {
+            std::cout << "Satisfiable" << std::endl;
+            model_t *model = yices_get_model(ctx, true);
+            if (model == NULL) {
+                std::cerr << "Error getting model" << std::endl;
+                yices_print_error(stderr);
+            }
+            else {
+                int32_t v;
+                for (int i = 0; i < problem.njobs; i++) {
+                    code = yices_get_int32_value(model, S[i], &v);
+                    if (code < 0) {
+                        std::cerr << "Cannot get model value " << i << std::endl;
+                        yices_print_error(stderr);
+                    }
+                    else {
+                        std::cout << "S_" << i << " = " << v << std::endl;
+                    }
+                }
+
+                yices_free_model(model);
+            }
+            break;
+        }
+        case STATUS_UNSAT:
+            std::cout << "Unsatisfiable" << std::endl;
+            break;
+        case STATUS_UNKNOWN:
+            std::cout << "Status unknown" << std::endl;
+            break;
+        case STATUS_IDLE:
+        case STATUS_SEARCHING:
+        case STATUS_INTERRUPTED:
+        case STATUS_ERROR:
+            std::cerr << "Status error" << std::endl;
+            yices_print_error(stderr);
             break;
     }
 
     yices_free_context(ctx);
+
     yices_exit();
 }
