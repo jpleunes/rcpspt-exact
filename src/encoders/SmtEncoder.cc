@@ -184,7 +184,11 @@ void SmtEncoder::encode() {
     term_t f_resource = yices_and(resourceConstrs.size(), &resourceConstrs.front());
     term_t f_final = yices_and2(f_precedence, f_resource);
 
-    context_t* ctx = yices_new_context(NULL);
+    // Use Integer Difference Logic solver
+    ctx_config_t* config = yices_new_config();
+    yices_default_config_for_logic(config, "QF_IDL");
+    context_t* ctx = yices_new_context(config);
+    yices_free_config(config);
 
     code = yices_assert_formula(ctx, f_final);
     if (code < 0) {
