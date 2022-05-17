@@ -210,45 +210,38 @@ void SmtEncoder::encode() {
         }
         pair<pair<int,int>,BDD*> result = BDDConstruction(0, C, C.K, L);
         BDD* robdd = result.second;
+        vector<BDD*> nodes;
+        int auxRoot = robdd->flatten(nodes);
 
         // Add SAT clauses based on the ROBDD
-        int nNodes = robdd->label(0);
-        if (falseNode.id == -1) continue; // Skip if the constraint cannot be falsified
-        vector<term_t> auxVars; // Auxiliary variables; one per node of the ROBDD
-        auxVars.reserve(nNodes);
-        for (int i = 0; i < nNodes; i++) auxVars.push_back(yices_new_uninterpreted_term(yices_bool_type()));
-        vector<BDD*> nodesStack; // Stack for depth-first traversal of BDD
-        nodesStack.push_back(robdd);
-        while (!nodesStack.empty()) {
-            BDD* curr = nodesStack.back();
-            nodesStack.pop_back();
-            if (!curr->fBranch->terminal() && !curr->fBranch->encoded) nodesStack.push_back(curr->fBranch);
-            if (!curr->tBranch->terminal() && !curr->tBranch->encoded) nodesStack.push_back(curr->tBranch);
-            term_t x = y[curr->selector.first][curr->selector.second];
-            int auxCurr = curr->id;
-            int auxF = curr->fBranch->id;
-            int auxT = curr->tBranch->id;
+        int auxTerminalF = -1;
+        int auxTerminalT = -1;
+        for (int i = 0; i < (int)nodes.size(); i++) {
+            if (nodes[i]->terminal()) {
+                if (nodes[i]->terminalValue()) auxTerminalT = i;
+                else auxTerminalF = i;
+            }
+        }
+        if (auxTerminalF == -1) continue; // Skip if the constraint cannot be falsified
+        for (BDD* node : nodes) {
+            if (node->terminal()) continue;
+            term_t x = y[node->selector.first][node->selector.second];
 
             // Add two clauses
-            resourceConstrs.push_back(yices_or2(auxVars[auxF], yices_not(auxVars[auxCurr])));
-            resourceConstrs.push_back(yices_or3(auxVars[auxT], yices_not(x), yices_not(auxVars[auxCurr])));
+            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(), yices_not(node->getAux())));
+            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(), yices_not(x), yices_not(node->getAux())));
 
-//            resourceConstrs.push_back(yices_or2(yices_or2(x, auxVars[auxF]), yices_not(auxVars[auxCurr])));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), auxVars[auxT]), yices_not(auxVars[auxCurr])));
-//            resourceConstrs.push_back(yices_or2(yices_or2(auxVars[auxF], auxVars[auxT]), yices_not(auxVars[auxCurr])));
-//            resourceConstrs.push_back(yices_or2(yices_or2(x, yices_not(auxVars[auxF])), auxVars[auxCurr]));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), yices_not(auxVars[auxT])), auxVars[auxCurr]));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(auxVars[auxF]), yices_not(auxVars[auxT])), auxVars[auxCurr]));
-
-            curr->encoded = true;
+//            resourceConstrs.push_back(yices_or2(yices_or2(x, node->fBranch->getAux()), yices_not(node->getAux())));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), node->tBranch->getAux()), yices_not(node->getAux())));
+//            resourceConstrs.push_back(yices_or2(yices_or2(node->fBranch->getAux(), node->tBranch->getAux()), yices_not(node->getAux())));
+//            resourceConstrs.push_back(yices_or2(yices_or2(x, yices_not(node->fBranch->getAux())), node->getAux()));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), yices_not(node->tBranch->getAux())), node->getAux()));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(node->fBranch->getAux()), yices_not(node->tBranch->getAux())), node->getAux()));
         }
         // Add three unary clauses
-        int auxTerminalF = falseNode.id;
-        int auxTerminalT = trueNode.id;
-        int auxRoot = robdd->id;
-        resourceConstrs.push_back(auxVars[auxRoot]);
-        resourceConstrs.push_back(yices_not(auxVars[auxTerminalF]));
-        resourceConstrs.push_back(auxVars[auxTerminalT]);
+        resourceConstrs.push_back(nodes[auxRoot]->getAux());
+        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux()));
+        resourceConstrs.push_back(nodes[auxTerminalT]->getAux());
     }
 
     term_t f_precedence = yices_and(precedenceConstrs.size(), &precedenceConstrs.front());

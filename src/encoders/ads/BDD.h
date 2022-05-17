@@ -37,7 +37,7 @@ public:
      * @param termValue boolean value of the node
      */
     BDD(bool termValue)
-            : selector({-1,-1}), fBranch(nullptr), tBranch(nullptr), id(-1), encoded(false) {
+            : selector({-1,-1}), fBranch(nullptr), tBranch(nullptr), visited(false), aux(-1) {
         if (termValue) term = 1;
         else term = 0;
     }
@@ -50,14 +50,16 @@ public:
      * @param trueBranch BDD corresponding to 'True' assignment
      */
     BDD(const pair<int,int>& selector, BDD* falseBranch, BDD* trueBranch)
-            : selector(selector), term(-1), fBranch(falseBranch), tBranch(trueBranch), id(-1), encoded(false) {}
+            : selector(selector), term(-1), fBranch(falseBranch), tBranch(trueBranch), visited(false), aux(-1) {}
 
     const pair<int,int> selector; // Index of the decision variable y_(i,t)
     BDD* fBranch; // Child for the 'False' branch
     BDD* tBranch; // Child for the 'True' branch
 
-    int id; // Node identifier, used for keeping track of auxiliary boolean variables
-    bool encoded; // Indicates whether the SAT clauses for this (non-terminal) node have already been generated
+    term_t getAux() {
+        if (aux == -1) aux = yices_new_uninterpreted_term(yices_bool_type());
+        return aux;
+    }
 
     bool terminal() const {
         return term != -1;
@@ -67,25 +69,24 @@ public:
         return term == 1;
     }
 
-    /**
-     * TODO
-     *
-     * @param nLabeled
-     * @return
-     */
-    int label(int nLabeled) {
-        if (id >= 0) return nLabeled;
+    int flatten(vector<BDD*>& out) {
+        visited = true;
+        int rootIndex;
         if (terminal()) {
-            id = nLabeled;
-            return nLabeled + 1;
+            rootIndex = (int)out.size();
+            out.push_back(this);
+            return rootIndex;
         }
-        int l = fBranch->label(nLabeled);
-        id = l;
-        int r = tBranch->label(id + 1);
-        return r;
+        if (!fBranch->visited) fBranch->flatten(out);
+        rootIndex = (int)out.size();
+        out.push_back(this);
+        if (!tBranch->visited) tBranch->flatten(out);
+        return rootIndex;
     }
 private:
     int term; // Indicates whether the node is terminal: -1 not terminal, 0 terminal w/ val. False, 1 terminal w/ val. True
+    bool visited; // Indicates whether the node has been visited (used for flatten(out))
+    term_t aux; // Auxiliary boolean variable used for creating a SAT encoding of an ROBDD
 };
 
 /**
