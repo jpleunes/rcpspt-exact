@@ -148,9 +148,9 @@ void SmtEncoder::encode() {
     precedenceConstrs.push_back(yices_arith_eq0_atom(S[0]));
 
     // Start variables must be within time windows
-    for (int i = 0; i < problem.njobs; i++)
+    for (int i = 1; i < problem.njobs; i++)
         precedenceConstrs.push_back(yices_arith_geq_atom(S[i], yices_int32(ES[i])));
-    for (int i = 0; i < problem.njobs; i++)
+    for (int i = 1; i < problem.njobs; i++)
         precedenceConstrs.push_back(yices_arith_leq_atom(S[i], yices_int32(LS[i])));
 
     // Enforce extended precedences
@@ -163,9 +163,9 @@ void SmtEncoder::encode() {
 
     // Enforce consistency for y_(i,t) variables
     for (int i = 0; i < problem.njobs; i++) {
-        for (int t = 0; t <= LS[i] - ES[i]; i++) { // t in STW(i)
-            // y_(i,t) <=> S_i is encoded into (y_(i,t) => S_i) ^ (S_i => y_(i,t)), which is in turn
-            // encoded into (~y_(i,t) v S_i) ^ (~S_i v y_(i,t))
+        for (int t = 0; t <= LS[i] - ES[i]; t++) { // t in STW(i)
+            // y_(i,t) <=> (S_i = t) is encoded into (y_(i,t) => (S_i = t)) ^ ((S_i = t) => y_(i,t)), which is in turn
+            // encoded into (~y_(i,t) v (S_i = t)) ^ (~(S_i = t) v y_(i,t))
             precedenceConstrs.push_back(yices_and2(yices_or2(yices_not(y[i][t]), yices_arith_eq_atom(S[i], yices_int32(t))),
                                                    yices_or2(yices_not(yices_arith_eq_atom(S[i], yices_int32(t))), y[i][t])));
         }
