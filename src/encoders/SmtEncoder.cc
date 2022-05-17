@@ -89,16 +89,17 @@ void SmtEncoder::preprocess() {
                     if (a == j || l[a][j] == INT32_MAX / 2) continue;
                     for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
                 }
-                rlb = ceil((1. / maxCapacities[k]) * rlb);
+                rlb /= maxCapacities[k];
                 if (rlb > maxRlb) maxRlb = rlb;
             }
             int lPrime = problem.durations[i] + maxRlb;
-            if (lPrime > l[i][j]) l[i][j] = lPrime;
+            if (lPrime > l[i][j]) {
+                l[i][j] = lPrime;
+                // Rerun Floyd-Warshall to propagate update to other time lags
+                floydWarshall();
+            }
         }
     }
-
-    // Rerun Floyd-Warshall to propagate updates to time lags
-    floydWarshall();
 
     // Set the time windows for the activities
 
