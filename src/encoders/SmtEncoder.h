@@ -26,6 +26,7 @@ SOFTWARE.
 #include <vector>
 
 #include "../Problem.h"
+#include "yices.h"
 
 using namespace std;
 
@@ -41,14 +42,22 @@ public:
             : problem(p),
               UB(problem.horizon) {
         preprocess();
+        initialize();
     }
     // Destructor
-    ~SmtEncoder() = default;
+    ~SmtEncoder() {
+        yices_exit();
+    }
 
     /**
      * TODO
      */
     void encode();
+
+    /**
+     * TODO
+     */
+    void solve(vector<int>& out);
 
 private:
     Problem& problem;
@@ -60,12 +69,22 @@ private:
 
     vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
+    vector<term_t> S; // Variable S_i: start time of activity i
+    vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
+
+    term_t formula; // Formula that will be used when calling solve()
+
     void floydWarshall();
 
     /**
      * Perform preprocessing to reduce the amount of variables in the final encoding.
      */
     void preprocess();
+
+    /**
+     * TODO
+     */
+    void initialize();
 };
 }
 

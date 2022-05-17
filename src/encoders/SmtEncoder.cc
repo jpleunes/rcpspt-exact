@@ -25,7 +25,8 @@ SOFTWARE.
 #include <cmath>
 
 #include "SmtEncoder.h"
-#include "yices.h"
+#include "ads/BDD.h"
+#include "ads/PBConstr.h"
 
 using namespace RcpsptExact;
 
@@ -116,22 +117,18 @@ void SmtEncoder::preprocess() {
     }
 }
 
-void SmtEncoder::encode() {
-    // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md)
-
+void SmtEncoder::initialize() {
     yices_init();
 
     // Create the variables
 
-    // S_i: start time of activity i
-    vector<term_t> S;
+    S.reserve(problem.njobs);
     for (int i = 0; i < problem.njobs; i++) {
         term_t startt = yices_new_uninterpreted_term(yices_int_type());
         S.push_back(startt);
     }
 
-    // y_(i,t): boolean representing whether activity i starts at time t in STW(i)
-    vector<vector<term_t>> y;
+    y.reserve(problem.njobs);
     for (int i = 0; i < problem.njobs; i++) {
         y.emplace_back();
         for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
@@ -139,6 +136,10 @@ void SmtEncoder::encode() {
             y[i].push_back(startb);
         }
     }
+}
+
+void SmtEncoder::encode() {
+    // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md) TODO: add/fix references
 
     // Add precedence constraints
 
@@ -175,23 +176,96 @@ void SmtEncoder::encode() {
 
     vector<term_t> resourceConstrs;
 
-    // TODO
+    // List of pseudo-boolean (PB) constraints
+    vector<PBConstr> pbConstrs;
 
-    // Pass all constraints to Yices
+    // Determine PB constraints
+    int q_i;
+    for (int k = 0; k < problem.nresources; k++) {
+        for (int t = 0; t < UB; t++) {
+            pbConstrs.emplace_back(problem.capacities[k][t]);
+            for (int i = 0; i < problem.njobs; i++) {
+                if (t < ES[i] || t >= LC[i]) continue; // only consider i if t in RTW(i)
+                for (int e = 0; e < problem.durations[i]; e++) {
+                    if (t-e < ES[i] || t-e > LS[i]) continue; // only consider e if t-e in STW(i)
+                    q_i = problem.requests[i][k][e];
+                    if (q_i == 0) continue;
+                    pbConstrs.back().addTerm(q_i, {i, -ES[i] + t-e});
+                }
+            }
+            if (pbConstrs.back().nTerms() == 0) pbConstrs.pop_back();
+        }
+    }
 
-    int32_t code;
+    for (const PBConstr& C : pbConstrs) {
+        // Construct an ROBDD (Reduced Ordered BDD)
+        BDD falseNode(false);
+        BDD trueNode(true);
+        vector<LSet> L;
+        for (int i = 0; i <= C.nTerms(); i++) {
+            int constsSum = 0;
+            for (int j = i; j < C.nTerms(); j++) constsSum += C.constant(j);
+            L.push_back(LSet({constsSum,INT32_MAX/2}, &trueNode));
+            L.back().insert({INT32_MIN/2, -1}, &falseNode);
+        }
+        pair<pair<int,int>,BDD*> result = BDDConstruction(0, C, C.K, L);
+        BDD* robdd = result.second;
+
+        // Add SAT clauses based on the ROBDD
+        int nNodes = robdd->label(0);
+        if (falseNode.id == -1) continue; // Skip if the constraint cannot be falsified
+        vector<term_t> auxVars; // Auxiliary variables; one per node of the ROBDD
+        auxVars.reserve(nNodes);
+        for (int i = 0; i < nNodes; i++) auxVars.push_back(yices_new_uninterpreted_term(yices_bool_type()));
+        vector<BDD*> nodesStack; // Stack for depth-first traversal of BDD
+        nodesStack.push_back(robdd);
+        while (!nodesStack.empty()) {
+            BDD* curr = nodesStack.back();
+            nodesStack.pop_back();
+            if (!curr->fBranch->terminal() && !curr->fBranch->encoded) nodesStack.push_back(curr->fBranch);
+            if (!curr->tBranch->terminal() && !curr->tBranch->encoded) nodesStack.push_back(curr->tBranch);
+            term_t x = y[curr->selector.first][curr->selector.second];
+            int auxCurr = curr->id;
+            int auxF = curr->fBranch->id;
+            int auxT = curr->tBranch->id;
+
+            // Add two clauses
+            resourceConstrs.push_back(yices_or2(auxVars[auxF], yices_not(auxVars[auxCurr])));
+            resourceConstrs.push_back(yices_or3(auxVars[auxT], yices_not(x), yices_not(auxVars[auxCurr])));
+
+//            resourceConstrs.push_back(yices_or2(yices_or2(x, auxVars[auxF]), yices_not(auxVars[auxCurr])));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), auxVars[auxT]), yices_not(auxVars[auxCurr])));
+//            resourceConstrs.push_back(yices_or2(yices_or2(auxVars[auxF], auxVars[auxT]), yices_not(auxVars[auxCurr])));
+//            resourceConstrs.push_back(yices_or2(yices_or2(x, yices_not(auxVars[auxF])), auxVars[auxCurr]));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), yices_not(auxVars[auxT])), auxVars[auxCurr]));
+//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(auxVars[auxF]), yices_not(auxVars[auxT])), auxVars[auxCurr]));
+
+            curr->encoded = true;
+        }
+        // Add three unary clauses
+        int auxTerminalF = falseNode.id;
+        int auxTerminalT = trueNode.id;
+        int auxRoot = robdd->id;
+        resourceConstrs.push_back(auxVars[auxRoot]);
+        resourceConstrs.push_back(yices_not(auxVars[auxTerminalF]));
+        resourceConstrs.push_back(auxVars[auxTerminalT]);
+    }
 
     term_t f_precedence = yices_and(precedenceConstrs.size(), &precedenceConstrs.front());
     term_t f_resource = yices_and(resourceConstrs.size(), &resourceConstrs.front());
-    term_t f_final = yices_and2(f_precedence, f_resource);
+    formula = yices_and2(f_precedence, f_resource);
+}
 
+void SmtEncoder::solve(vector<int>& out) {
     // Use Integer Difference Logic solver
     ctx_config_t* config = yices_new_config();
     yices_default_config_for_logic(config, "QF_IDL");
     context_t* ctx = yices_new_context(config);
     yices_free_config(config);
 
-    code = yices_assert_formula(ctx, f_final);
+    // Pass formula to Yices
+    int32_t code;
+    code = yices_assert_formula(ctx, formula);
     if (code < 0) {
         std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
         yices_print_error(stderr);
@@ -215,6 +289,7 @@ void SmtEncoder::encode() {
                     }
                     else {
                         std::cout << "S_" << i << " = " << v << std::endl;
+                        out.push_back(v);
                     }
                 }
 
@@ -238,6 +313,4 @@ void SmtEncoder::encode() {
     }
 
     yices_free_context(ctx);
-
-    yices_exit();
 }

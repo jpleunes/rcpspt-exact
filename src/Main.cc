@@ -70,7 +70,14 @@ int main(int argc, char** argv) {
     Problem test = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
-    SmtEncoder(test).encode();
+    SmtEncoder enc(test);
+    enc.encode();
+    vector<int> result;
+    enc.solve(result);
+    if (!result.empty()) {
+        bool valid = checkValid(test, result);
+        std::cout << "Valid? " << valid << std::endl;
+    }
 
     return 0;
 }
