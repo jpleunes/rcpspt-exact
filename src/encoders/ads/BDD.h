@@ -50,7 +50,7 @@ public:
      * @param trueBranch BDD corresponding to 'True' assignment
      */
     BDD(const pair<int,int>& selector, BDD* falseBranch, BDD* trueBranch)
-            : selector(selector), term(-1), fBranch(falseBranch), tBranch(trueBranch), visited(false), aux(-1) {}
+            : selector(selector), fBranch(falseBranch), tBranch(trueBranch), term(-1), visited(false), aux(-1) {}
 
     const pair<int,int> selector; // Index of the decision variable y_(i,t)
     BDD* fBranch; // Child for the 'False' branch

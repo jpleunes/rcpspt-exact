@@ -15,4 +15,4 @@ $(BUILD_DIR)%.o : $(SRC_DIR)%.cc
 		g++ $(CFLAGS) -c -o $@ $<
 
 clean :
-		rm -f build/*.o $(TARGET)
+		rm -f build/*.o build/encoders/*.o $(TARGET)
