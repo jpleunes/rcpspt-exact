@@ -62,6 +62,9 @@ bool checkValid(const Problem& problem, const vector<int>& solution) {
         }
     }
 
+    for (int i = 0; i < problem.nresources; i++) delete[] available[i];
+    delete[] available;
+
     return true;
 }
 
