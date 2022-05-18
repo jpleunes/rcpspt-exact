@@ -164,11 +164,11 @@ void SmtEncoder::encode() {
 
     // Enforce consistency for y_(i,t) variables
     for (int i = 0; i < problem.njobs; i++) {
-        for (int t = 0; t <= LS[i] - ES[i]; t++) { // t in STW(i)
+        for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i)
             // y_(i,t) <=> (S_i = t) is encoded into (y_(i,t) => (S_i = t)) ^ ((S_i = t) => y_(i,t)), which is in turn
             // encoded into (~y_(i,t) v (S_i = t)) ^ (~(S_i = t) v y_(i,t))
-            precedenceConstrs.push_back(yices_and2(yices_or2(yices_not(y[i][t]), yices_arith_eq_atom(S[i], yices_int32(t))),
-                                                   yices_or2(yices_not(yices_arith_eq_atom(S[i], yices_int32(t))), y[i][t])));
+            precedenceConstrs.push_back(yices_or2(yices_not(y[i][-ES[i] + t]), yices_arith_eq_atom(S[i], yices_int32(t))));
+            precedenceConstrs.push_back(yices_or2(yices_not(yices_arith_eq_atom(S[i], yices_int32(t))), y[i][-ES[i] + t]));
         }
     }
 
