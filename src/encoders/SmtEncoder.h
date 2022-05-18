@@ -40,7 +40,11 @@ public:
     // Constructor
     SmtEncoder(Problem& p)
             : problem(p),
-              UB(problem.horizon) {
+              UB(problem.horizon),
+              ES(p.njobs),
+              EC(p.njobs),
+              LS(p.njobs),
+              LC(p.njobs) {
         preprocess();
         initialize();
     }

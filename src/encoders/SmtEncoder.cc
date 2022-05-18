@@ -103,17 +103,11 @@ void SmtEncoder::preprocess() {
     }
 
     // Set the time windows for the activities
-
-    ES.reserve(problem.njobs);
-    EC.reserve(problem.njobs);
-    LS.reserve(problem.njobs);
-    LC.reserve(problem.njobs);
-
     for (int i = 0; i < problem.njobs; i++) {
-        ES.push_back(l[0][i]);
-        EC.push_back(l[0][i] + problem.durations[i]);
-        LS.push_back(UB - l[i][problem.njobs - 1]);
-        LC.push_back(UB - l[i][problem.njobs - 1] + problem.durations[i]);
+        ES[i] = l[0][i];
+        EC[i] = l[0][i] + problem.durations[i];
+        LS[i] = UB - l[i][problem.njobs - 1];
+        LC[i] = UB - l[i][problem.njobs - 1] + problem.durations[i];
     }
 }
 
@@ -197,6 +191,7 @@ void SmtEncoder::encode() {
         }
     }
 
+    // Encode each PB constraint
     for (const PBConstr& C : pbConstrs) {
         // Construct an ROBDD (Reduced Ordered BDD)
         BDD falseNode(false);
@@ -226,17 +221,9 @@ void SmtEncoder::encode() {
         for (BDD* node : nodes) {
             if (node->terminal()) continue;
             term_t x = y[node->selector.first][node->selector.second];
-
             // Add two clauses
             resourceConstrs.push_back(yices_or2(node->fBranch->getAux(), yices_not(node->getAux())));
             resourceConstrs.push_back(yices_or3(node->tBranch->getAux(), yices_not(x), yices_not(node->getAux())));
-
-//            resourceConstrs.push_back(yices_or2(yices_or2(x, node->fBranch->getAux()), yices_not(node->getAux())));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), node->tBranch->getAux()), yices_not(node->getAux())));
-//            resourceConstrs.push_back(yices_or2(yices_or2(node->fBranch->getAux(), node->tBranch->getAux()), yices_not(node->getAux())));
-//            resourceConstrs.push_back(yices_or2(yices_or2(x, yices_not(node->fBranch->getAux())), node->getAux()));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(x), yices_not(node->tBranch->getAux())), node->getAux()));
-//            resourceConstrs.push_back(yices_or2(yices_or2(yices_not(node->fBranch->getAux()), yices_not(node->tBranch->getAux())), node->getAux()));
         }
         // Add three unary clauses
         resourceConstrs.push_back(nodes[auxRoot]->getAux());
