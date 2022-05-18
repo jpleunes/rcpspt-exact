@@ -204,6 +204,7 @@ void SmtEncoder::encode() {
             L.back().insert({INT32_MIN/2, -1}, &falseNode);
         }
         pair<pair<int,int>,BDD*> result = BDDConstruction(0, C, C.K, L);
+        for (LSet& s : L) s.deleteTree();
         BDD* robdd = result.second;
         vector<BDD*> nodes;
         int auxRoot = robdd->flatten(nodes);

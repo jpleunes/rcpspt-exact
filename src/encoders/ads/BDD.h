@@ -129,6 +129,15 @@ public:
         if (K > interval.second && r != nullptr) return r->search(K);
         return {{-1,-1}, nullptr};
     }
+
+    void deleteTree() {
+        if (l != nullptr) l->deleteTree();
+        delete l;
+        l = nullptr;
+        if (r != nullptr) r->deleteTree();
+        delete r;
+        r = nullptr;
+    }
 };
 
 pair<pair<int,int>, BDD*> BDDConstruction(int i, const PBConstr& C, int KPrime, vector<LSet>& L) {
