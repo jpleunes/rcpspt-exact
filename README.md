@@ -1,6 +1,6 @@
 # SMT/SAT Encoder for Exact Solving of the RCPSP/t
-Encodes a problem instance into the [SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml) or CNF (DIMACS format),
-for an exact solving approach for the RCPSP/t (Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests) using SAT solvers.
+Encodes a problem instance into the [SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml) using the C API provided by Yices 2, or into CNF (DIMACS format).
+This facilitates exact solving of the RCPSP/t (Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests) using SAT solvers.
 
 ## Test Data
 Test instances that can be parsed by this implementation can be downloaded from http://www.om-db.wi.tum.de/psplib/newinstances.html.
@@ -17,10 +17,14 @@ The Makefile and CMakeLists.txt of this project expect that the Yices library is
 Building can be done by running `make` (clean with `make clean`), or by using CMake.
 
 ## References
-**The SMT encoding (SMT2 format) is wholly based on a paper by M. Bofill et al. (2020):<br />**
+**The SMT encoding (input into Yices 2 SMT solver through the provided C API) is wholly based on a paper by M. Bofill et al. (2020):<br />**
 M. Bofill et al. “SMT encodings for Resource-Constrained Project Scheduling Problems”. In:
 _Computers & Industrial Engineering_ 149 (2020). doi: https://doi.org/10.1016/j.cie.2020.106777.
 
 **This encoder program was tested on (and the parser was designed for) instances that were generated as part of a paper by S. Hartmann (2013):<br />**
 S. Hartmann. "Project scheduling with resource capacities and requests varying with time: a case study". In: 
 _Flexible Services and Manufacturing Journal_ 25 (2013), pp. 74-93. URL: https://doi.org/10.1007/s10696-012-9141-8.
+
+**The encoding of Pseudo-Boolean constraints into SAT follows the approach from a paper by I. Abío et al. (2012):<br />**
+I. Abío et al. “A New Look at BDDs for Pseudo-Boolean Constraints”. In: 
+_Journal of Artificial Intelligence Research_ 45 (2012), pp. 443–480.

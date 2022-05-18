@@ -31,6 +31,7 @@ SOFTWARE.
 using namespace RcpsptExact;
 
 void SmtEncoder::floydWarshall() {
+    // Floyd-Warshall algorithm (https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm)
     for (int k = 0; k < problem.njobs; k++) {
         for (int i = 0; i < problem.njobs; i++) {
             for (int j = 0; j < problem.njobs; j++) {
@@ -133,7 +134,7 @@ void SmtEncoder::initialize() {
 }
 
 void SmtEncoder::encode() {
-    // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md) TODO: add/fix references
+    // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md)
 
     // Add precedence constraints
 
@@ -193,7 +194,7 @@ void SmtEncoder::encode() {
 
     // Encode each PB constraint
     for (const PBConstr& C : pbConstrs) {
-        // Construct an ROBDD (Reduced Ordered BDD)
+        // Construct an ROBDD (Reduced Ordered BDD), following Algorithm 1 and Example 24: BDD-1 from the paper by I. Abío et al. (2012) (reference in README.md)
         BDD falseNode(false);
         BDD trueNode(true);
         vector<LSet> L;
@@ -209,7 +210,7 @@ void SmtEncoder::encode() {
         vector<BDD*> nodes;
         int auxRoot = robdd->flatten(nodes);
 
-        // Add SAT clauses based on the ROBDD
+        // Add SAT clauses based on the ROBDD, following Example 24: BDD-1 from the paper by I. Abío et al. (2012) (reference in README.md)
         int auxTerminalF = -1;
         int auxTerminalT = -1;
         for (int i = 0; i < (int)nodes.size(); i++) {

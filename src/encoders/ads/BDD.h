@@ -141,7 +141,7 @@ public:
 };
 
 pair<pair<int,int>, BDD*> BDDConstruction(int i, const PBConstr& C, int KPrime, vector<LSet>& L) {
-    // This function is fully based on ... TODO
+    // This function is fully based on Algorithm 2 in the paper by I. Abío et al. (2012) (reference in README.md)
 
     pair<pair<int,int>,BDD*> result = L[i].search(KPrime);
     if (result.second != nullptr) return result;
