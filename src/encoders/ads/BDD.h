@@ -83,6 +83,7 @@ public:
         if (!tBranch->visited) tBranch->flatten(out);
         return rootIndex;
     }
+
 private:
     int term; // Indicates whether the node is terminal: -1 not terminal, 0 terminal w/ val. False, 1 terminal w/ val. True
     bool visited; // Indicates whether the node has been visited (used for flatten(out))
@@ -149,8 +150,15 @@ pair<pair<int,int>, BDD*> BDDConstruction(int i, const PBConstr& C, int KPrime, 
     pair<pair<int,int>, BDD*> resF = BDDConstruction(i+1, C, KPrime, L);
     pair<pair<int,int>, BDD*> resT = BDDConstruction(i+1, C, KPrime - C.constant(i), L);
 
-    if (resF.first == resT.first)
+    if (resF.first == resT.first) {
         result = { { resT.first.first + C.constant(i), resT.first.second }, resT.second };
+
+        if (resT.second != resF.second && resF.second != nullptr) {
+            vector<BDD*> nodesToDelete;
+            resF.second->flatten(nodesToDelete);
+            for (BDD* node : nodesToDelete) if (!node->terminal()) delete node;
+        }
+    }
     else {
         BDD* robdd = new BDD(C.var(i), resF.second, resT.second);
         int intervalL = std::max(resF.first.first, resT.first.first + C.constant(i));

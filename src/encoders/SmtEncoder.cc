@@ -231,6 +231,8 @@ void SmtEncoder::encode() {
         resourceConstrs.push_back(nodes[auxRoot]->getAux());
         resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux()));
         resourceConstrs.push_back(nodes[auxTerminalT]->getAux());
+
+        for (BDD* node : nodes) if (!node->terminal()) delete node;
     }
 
     term_t f_precedence = yices_and(precedenceConstrs.size(), &precedenceConstrs.front());
