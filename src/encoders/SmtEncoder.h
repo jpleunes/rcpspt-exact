@@ -38,9 +38,10 @@ namespace RcpsptExact {
 class SmtEncoder {
 public:
     // Constructor
-    SmtEncoder(Problem& p)
+    SmtEncoder(Problem& p, pair<int,int> bounds)
             : problem(p),
-              UB(problem.horizon),
+              LB(bounds.first),
+              UB(bounds.second),
               ES(p.njobs),
               EC(p.njobs),
               LS(p.njobs),
@@ -50,6 +51,7 @@ public:
     }
     // Destructor
     ~SmtEncoder() {
+        yices_free_context(ctx);
         yices_exit();
     }
 
@@ -59,9 +61,19 @@ public:
     void encode();
 
     /**
-     * TODO
+     * Calls Yices to solve the feasibility problem with the current encoding.
+     *
+     * @param out vector with the start time for each activity, will be empty if problem is unsatisfiable
      */
     void solve(vector<int>& out);
+
+    /**
+     * Finds the optimal solution by calling Yices repeatedly.
+     * Starts with the given lower and upper bounds, and incrementally decreases the upper bound.
+     *
+     * @return vector with the start time for each activity, or an empty vector if the problem is infeasible
+     */
+    vector<int> optimise();
 
 private:
     Problem& problem;
@@ -69,12 +81,14 @@ private:
     vector<vector<int>> Estar; // List of successors for each activity, in the extended precedence graph
     vector<vector<int>> l;     // Time lags for all pairs of activities
 
-    int UB; // The upper bound for the makespan that is currently being used TODO: calculate better UB using PSGS and afterwards update LS and LC
+    int LB, UB; // The lower and upper bounds for the makespan that are currently being used TODO: update LS and LC
 
     vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
     vector<term_t> S; // Variable S_i: start time of activity i
     vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
+
+    context_t* ctx; // Yices context
 
     term_t formula; // Formula that will be used when calling solve()
 

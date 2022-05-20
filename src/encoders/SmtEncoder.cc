@@ -74,34 +74,35 @@ void SmtEncoder::preprocess() {
 
     // Use energetic reasoning on precedences to improve accuracy of time lags
 
-    // Find maximum capacity over time for each resource
-    vector<int> maxCapacities(problem.nresources, 0);
-    for (int k = 0; k < problem.nresources; k++)
-        for (int t = 0; t < problem.horizon; t++)
-            if (problem.capacities[k][t] > maxCapacities[k]) maxCapacities[k] = problem.capacities[k][t];
-
-    // Update time lags
-    for (int i = 0; i < problem.njobs; i++) {
-        for (int j : Estar[i]) {
-            if (i == j) continue;
-            int maxRlb = -1;
-            for (int k = 0; k < problem.nresources; k++) {
-                int rlb = 0;
-                for (int a: Estar[i]) {
-                    if (a == j || l[a][j] == INT32_MAX / 2) continue;
-                    for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
-                }
-                rlb /= maxCapacities[k];
-                if (rlb > maxRlb) maxRlb = rlb;
-            }
-            int lPrime = problem.durations[i] + maxRlb;
-            if (lPrime > l[i][j]) {
-                l[i][j] = lPrime;
-                // Rerun Floyd-Warshall to propagate update to other time lags
-                floydWarshall();
-            }
-        }
-    }
+    // TODO: fix energetic reasoning
+//    // Find maximum capacity over time for each resource
+//    vector<int> maxCapacities(problem.nresources, 0);
+//    for (int k = 0; k < problem.nresources; k++)
+//        for (int t = 0; t < problem.horizon; t++)
+//            if (problem.capacities[k][t] > maxCapacities[k]) maxCapacities[k] = problem.capacities[k][t];
+//
+//    // Update time lags
+//    for (int i = 0; i < problem.njobs; i++) {
+//        for (int j : Estar[i]) {
+//            if (i == j) continue;
+//            int maxRlb = -1;
+//            for (int k = 0; k < problem.nresources; k++) {
+//                int rlb = 0;
+//                for (int a: Estar[i]) {
+//                    if (a == j || l[a][j] == INT32_MAX / 2) continue;
+//                    for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
+//                }
+//                rlb /= maxCapacities[k];
+//                if (rlb > maxRlb) maxRlb = rlb;
+//            }
+//            int lPrime = problem.durations[i] + maxRlb;
+//            if (lPrime > l[i][j]) {
+//                l[i][j] = lPrime;
+//                // Rerun Floyd-Warshall to propagate update to other time lags
+//                floydWarshall();
+//            }
+//        }
+//    }
 
     // Set the time windows for the activities
     for (int i = 0; i < problem.njobs; i++) {
@@ -131,6 +132,13 @@ void SmtEncoder::initialize() {
             y[i].push_back(startb);
         }
     }
+
+    // Create multi-check context, that uses Integer Difference Logic solver
+    ctx_config_t* config = yices_new_config();
+    yices_default_config_for_logic(config, "QF_IDL");
+    yices_set_config(config, "mode", "multi-checks");
+    ctx = yices_new_context(config);
+    yices_free_config(config);
 }
 
 void SmtEncoder::encode() {
@@ -241,12 +249,6 @@ void SmtEncoder::encode() {
 }
 
 void SmtEncoder::solve(vector<int>& out) {
-    // Use Integer Difference Logic solver
-    ctx_config_t* config = yices_new_config();
-    yices_default_config_for_logic(config, "QF_IDL");
-    context_t* ctx = yices_new_context(config);
-    yices_free_config(config);
-
     // Pass formula to Yices
     int32_t code;
     code = yices_assert_formula(ctx, formula);
@@ -295,6 +297,76 @@ void SmtEncoder::solve(vector<int>& out) {
             yices_print_error(stderr);
             break;
     }
+}
 
-    yices_free_context(ctx);
+vector<int> SmtEncoder::optimise() {
+    // This optimisation procedure was inspired by the paper by M. Bofill et al. (2020) (reference in README.md)
+
+    vector<int> solution(problem.njobs);
+    int32_t code, v;
+    code = yices_assert_formula(ctx, formula);
+    if (code < 0) {
+        std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
+        yices_print_error(stderr);
+    }
+    smt_status_t status = yices_check_context(ctx, NULL);
+    model_t* model;
+    if (status == STATUS_SAT) {
+        model = yices_get_model(ctx, true);
+        if (model == NULL) {
+            std::cerr << "Error getting model" << std::endl;
+            yices_print_error(stderr);
+        }
+        else {
+            for (int i = 0; i < problem.njobs; i++) {
+                code = yices_get_int32_value(model, S[i], &v);
+                if (code < 0) {
+                    std::cerr << "Cannot get model value " << i << std::endl;
+                    yices_print_error(stderr);
+                }
+                else solution[i] = v;
+            }
+            yices_free_model(model);
+        }
+        UB = solution.back() - 1;
+    }
+    else if (status == STATUS_UNSAT) return {};
+    else {
+        std::cerr << "Unknown status when checking satisfiability" << std::endl;
+        return {};
+    }
+    while (status == STATUS_SAT && UB >= LB) {
+        formula = yices_and2(formula, yices_arith_leq_atom(S.back(), yices_int32(UB)));
+        code = yices_assert_formula(ctx, formula);
+        if (code < 0) {
+            std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
+            yices_print_error(stderr);
+        }
+        status = yices_check_context(ctx, NULL);
+        if (status == STATUS_SAT) {
+            model = yices_get_model(ctx, true);
+            if (model == NULL) {
+                std::cerr << "Error getting model" << std::endl;
+                yices_print_error(stderr);
+            }
+            else {
+                for (int i = 0; i < problem.njobs; i++) {
+                    code = yices_get_int32_value(model, S[i], &v);
+                    if (code < 0) {
+                        std::cerr << "Cannot get model value " << i << std::endl;
+                        yices_print_error(stderr);
+                    }
+                    else solution[i] = v;
+                }
+                yices_free_model(model);
+            }
+            UB = solution.back() - 1;
+            std::cout << "Current makespan: " << solution.back() << std::endl; // TODO: remove (this line is for debugging)
+        }
+        else if (status != STATUS_UNSAT) {
+            std::cerr << "Unknown status when checking satisfiability" << std::endl;
+            return {};
+        }
+    }
+    return solution;
 }

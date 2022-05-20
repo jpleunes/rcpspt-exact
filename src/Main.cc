@@ -73,11 +73,11 @@ int main(int argc, char** argv) {
     Problem test = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
-    SmtEncoder enc(test);
+    SmtEncoder enc(test, {0, 100}); // TODO: use heuristic solver to find bounds
     enc.encode();
-    vector<int> result;
-    enc.solve(result);
+    vector<int> result = enc.optimise();
     if (!result.empty()) {
+        std::cout << "Makespan: " << result.back() << std::endl;
         bool valid = checkValid(test, result);
         std::cout << "Valid? " << valid << std::endl;
     }
