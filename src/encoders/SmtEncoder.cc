@@ -74,35 +74,33 @@ void SmtEncoder::preprocess() {
 
     // Use energetic reasoning on precedences to improve accuracy of time lags
 
-    // TODO: fix energetic reasoning
-//    // Find maximum capacity over time for each resource
-//    vector<int> maxCapacities(problem.nresources, 0);
-//    for (int k = 0; k < problem.nresources; k++)
-//        for (int t = 0; t < problem.horizon; t++)
-//            if (problem.capacities[k][t] > maxCapacities[k]) maxCapacities[k] = problem.capacities[k][t];
-//
-//    // Update time lags
-//    for (int i = 0; i < problem.njobs; i++) {
-//        for (int j : Estar[i]) {
-//            if (i == j) continue;
-//            int maxRlb = -1;
-//            for (int k = 0; k < problem.nresources; k++) {
-//                int rlb = 0;
-//                for (int a: Estar[i]) {
-//                    if (a == j || l[a][j] == INT32_MAX / 2) continue;
-//                    for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
-//                }
-//                rlb /= maxCapacities[k];
-//                if (rlb > maxRlb) maxRlb = rlb;
-//            }
-//            int lPrime = problem.durations[i] + maxRlb;
-//            if (lPrime > l[i][j]) {
-//                l[i][j] = lPrime;
-//                // Rerun Floyd-Warshall to propagate update to other time lags
-//                floydWarshall();
-//            }
-//        }
-//    }
+    // Find maximum capacity over time for each resource
+    vector<int> maxCapacities(problem.nresources, 0);
+    for (int k = 0; k < problem.nresources; k++)
+        for (int t = 0; t < problem.horizon; t++)
+            if (problem.capacities[k][t] > maxCapacities[k]) maxCapacities[k] = problem.capacities[k][t];
+
+    // Update time lags
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int j : Estar[i]) {
+            if (i == j) continue;
+            int maxRlb = -1;
+            for (int k = 0; k < problem.nresources; k++) {
+                int rlb = 0;
+                for (int a: Estar[i]) {
+                    if (a == j || l[a][j] == INT32_MAX / 2) continue;
+                    for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
+                }
+                rlb /= maxCapacities[k];
+                if (rlb > maxRlb) maxRlb = rlb;
+            }
+            if (maxRlb > l[i][j]) {
+                l[i][j] = maxRlb;
+                // Rerun Floyd-Warshall to propagate update to other time lags
+                floydWarshall();
+            }
+        }
+    }
 
     // Set the time windows for the activities
     for (int i = 0; i < problem.njobs; i++) {
