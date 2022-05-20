@@ -26,6 +26,7 @@ SOFTWARE.
 #include "Problem.h"
 #include "Parser.h"
 #include "encoders/SmtEncoder.h"
+#include "utils/HeuristicSolver.h"
 
 using namespace RcpsptExact;
 
@@ -70,15 +71,16 @@ bool checkValid(const Problem& problem, const vector<int>& solution) {
 
 int main(int argc, char** argv) {
     std::ifstream inpFile(argv[1]);
-    Problem test = Parser::parseProblemInstance(inpFile);
+    Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
-    SmtEncoder enc(test, {0, 100}); // TODO: use heuristic solver to find bounds
+    pair<int,int> bounds = calcBoundsPriorityRule(problem);
+    SmtEncoder enc(problem, bounds);
     enc.encode();
     vector<int> result = enc.optimise();
     if (!result.empty()) {
         std::cout << "Makespan: " << result.back() << std::endl;
-        bool valid = checkValid(test, result);
+        bool valid = checkValid(problem, result);
         std::cout << "Valid? " << valid << std::endl;
     }
 
