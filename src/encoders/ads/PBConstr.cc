@@ -1,4 +1,4 @@
-/**************************************************************************************[PRConstr.h]
+/*************************************************************************************[PBConstr.cc]
 Copyright (c) 2022, Jelle Pleunes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,54 +20,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
-#ifndef RCPSPT_EXACT_PBCONSTR_H
-#define RCPSPT_EXACT_PBCONSTR_H
+#include "PBConstr.h"
 
-#include <vector>
+using namespace RcpsptExact;
 
-using namespace std;
+PBConstr::PBConstr(int K)
+        : K(K), n(0) { }
 
-namespace RcpsptExact {
-/**
- * Data structure representing a pseudo-boolean (PB) constraint.
- */
-class PBConstr {
-public:
-    const int K;
-
-    PBConstr(int K);
-
-    int nTerms() const;
-
-    /**
-     * Adds a term to the summation.
-     *
-     * @param constant the integer constant
-     * @param varIndex index of the boolean variable
-     */
-    void addTerm(int constant, pair<int,int> varIndex);
-
-    /**
-     * Gets the integer constant at index i in the summation.
-     *
-     * @param i index
-     * @return the integer constant
-     */
-    int constant(int i) const;
-
-    /**
-     * Gets the index of the boolean variable at index i in the summation.
-     *
-     * @param i
-     * @return
-     */
-    const pair<int,int>& var(int i) const;
-
-private:
-    vector<int> q;
-    vector<pair<int,int>> y_ixs;
-    int n;
-};
+int PBConstr::nTerms() const {
+    return n;
 }
 
-#endif //RCPSPT_EXACT_PBCONSTR_H
+void PBConstr::addTerm(int constant, pair<int, int> varIndex) {
+    q.push_back(constant);
+    y_ixs.push_back(varIndex);
+    n++;
+}
+
+int PBConstr::constant(int i) const {
+    return q[i];
+}
+
+const pair<int,int>& PBConstr::var(int i) const {
+    return y_ixs[i];
+}
