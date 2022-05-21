@@ -189,8 +189,12 @@ pair<int, int> calcBoundsPriorityRule(Problem &problem) {
                     }
                 }
                 if (feasible) feasibleFinal = true;
-                if (finish > problem.horizon) return {ef.back(), problem.horizon};
+                if (finish > problem.horizon) {
+                    feasibleFinal = false;
+                    break;
+                }
             }
+            if (!feasibleFinal) break; // Skip the rest of this pass
             schedule[winner] = finish;
             // Update remaining resource availabilities
             for (int k = 0; k < problem.nresources; k++) {
@@ -198,7 +202,7 @@ pair<int, int> calcBoundsPriorityRule(Problem &problem) {
                     available[k][finish - duration + t] -= problem.requests[winner][k][t];
             }
         }
-        if (schedule.back() < bestMakespan) bestMakespan = schedule.back();
+        if (schedule.back() >= 0 && schedule.back() < bestMakespan) bestMakespan = schedule.back();
     }
     // For the lower bound we use earliest start of end dummy activity (start is same as finish for this activity)
     return {ef.back(), bestMakespan};
