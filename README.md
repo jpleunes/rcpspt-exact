@@ -18,7 +18,7 @@ Building can be done by running `make` (clean with `make clean`), or by using CM
 
 ## References
 **The SMT encoding (input into Yices 2 SMT solver through the provided C API) is wholly based on a paper by M. Bofill et al. (2020):<br />**
-M. Bofill et al. “SMT encodings for Resource-Constrained Project Scheduling Problems”. In:
+M. Bofill et al. "SMT encodings for Resource-Constrained Project Scheduling Problems". In:
 _Computers & Industrial Engineering_ 149 (2020). doi: https://doi.org/10.1016/j.cie.2020.106777.
 
 **This encoder program was tested on (and the parser was designed for) instances that were generated as part of a paper by S. Hartmann (2013):<br />**
@@ -26,5 +26,9 @@ S. Hartmann. "Project scheduling with resource capacities and requests varying w
 _Flexible Services and Manufacturing Journal_ 25 (2013), pp. 74-93. URL: https://doi.org/10.1007/s10696-012-9141-8.
 
 **The encoding of Pseudo-Boolean constraints into SAT follows the approach from a paper by I. Abío et al. (2012):<br />**
-I. Abío et al. “A New Look at BDDs for Pseudo-Boolean Constraints”. In: 
+I. Abío et al. "A New Look at BDDs for Pseudo-Boolean Constraints". In: 
 _Journal of Artificial Intelligence Research_ 45 (2012), pp. 443–480.
+
+**The SAT (CNF) encoding for precedence constraints is inspired by a paper by A. Horbach (2010):<br />**
+A. Horbach. "A Boolean satisfiability approach to the resource-constrained project scheduling problem". In:
+_Annals of Operations Research_ 181 (2010), pp. 89-107. URL: https://doi.org/10.1007/s10479-010-0693-2.
