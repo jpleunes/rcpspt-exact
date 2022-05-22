@@ -30,6 +30,18 @@ SOFTWARE.
 
 using namespace RcpsptExact;
 
+SmtEncoder::SmtEncoder(Problem &p, pair<int, int> bounds)
+        : problem(p),
+          LB(bounds.first),
+          UB(bounds.second),
+          ES(p.njobs),
+          EC(p.njobs),
+          LS(p.njobs),
+          LC(p.njobs) {
+    preprocess();
+    initialise();
+}
+
 void SmtEncoder::floydWarshall() {
     // Floyd-Warshall algorithm (https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm)
     for (int k = 0; k < problem.njobs; k++) {

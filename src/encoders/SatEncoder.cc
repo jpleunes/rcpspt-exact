@@ -31,6 +31,18 @@ SOFTWARE.
 
 using namespace RcpsptExact;
 
+SatEncoder::SatEncoder(Problem &p, pair<int, int> bounds)
+        : problem(p),
+          LB(bounds.first),
+          UB(bounds.second),
+          ES(p.njobs),
+          EC(p.njobs),
+          LS(p.njobs),
+          LC(p.njobs) {
+    preprocessFeasible = preprocess();
+    initialise();
+}
+
 bool SatEncoder::preprocess() {
     queue<int> q; // Use a queue for breadth-first traversal of the precedence graph
 

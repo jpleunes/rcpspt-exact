@@ -26,6 +26,7 @@ SOFTWARE.
 #include "Problem.h"
 #include "Parser.h"
 #include "encoders/SmtEncoder.h"
+#include "encoders/SatEncoder.h"
 #include "utils/HeuristicSolver.h"
 
 using namespace RcpsptExact;
@@ -70,19 +71,31 @@ bool checkValid(const Problem& problem, const vector<int>& solution) {
 }
 
 int main(int argc, char** argv) {
-    std::ifstream inpFile(argv[1]);
+    if (argc < 3) {
+        std::cout << "Please provide the following arguments: encoder[smt/sat] input[path_to_file]" << std::endl;
+        return 1;
+    }
+
+    std::ifstream inpFile(argv[2]);
     Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
     pair<int,int> bounds = calcBoundsPriorityRule(problem);
-    SmtEncoder enc(problem, bounds);
-    enc.encode();
-    vector<int> result = enc.optimise();
+    YicesEncoder* enc = nullptr;
+    if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds);
+    else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds);
+    else {
+        std::cout << "Argument encoder[smt/sat] not recognised" << std::endl;
+        return 1;
+    }
+    enc->encode();
+    vector<int> result = enc->optimise();
     if (!result.empty()) {
         std::cout << "Makespan: " << result.back() << std::endl;
         bool valid = checkValid(problem, result);
         std::cout << "Valid? " << valid << std::endl;
     }
 
+    delete enc;
     return 0;
 }

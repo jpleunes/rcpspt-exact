@@ -25,7 +25,7 @@ SOFTWARE.
 
 #include <vector>
 
-#include "../Problem.h"
+#include "YicesEncoder.h"
 #include "yices.h"
 
 using namespace std;
@@ -35,20 +35,10 @@ namespace RcpsptExact {
 /**
  * Class for encoding an instance of Problem into SAT.
  */
-class SatEncoder {
+class SatEncoder : public YicesEncoder {
 public:
     // Constructor
-    SatEncoder(Problem& p, pair<int,int> bounds)
-            : problem(p),
-              LB(bounds.first),
-              UB(bounds.second),
-              ES(p.njobs),
-              EC(p.njobs),
-              LS(p.njobs),
-              LC(p.njobs) {
-        preprocessFeasible = preprocess();
-        initialise();
-    }
+    SatEncoder(Problem& p, pair<int,int> bounds);
     // Destructor
     ~SatEncoder() {
         yices_free_context(ctx);
@@ -58,14 +48,14 @@ public:
     /**
      * Encodes the problem instance into CNF and stores the result in the 'formula' field.
      */
-    void encode();
+    void encode() override;
 
     /**
      * Calls Yices to solve the feasibility problem with the current encoding.
      *
      * @return vector with the start time for each activity, will be empty if problem is unsatisfiable
      */
-    vector<int> solve();
+    vector<int> solve() override;
 
     /**
      * Finds the optimal solution by calling Yices repeatedly.
@@ -73,7 +63,7 @@ public:
      *
      * @return vector with the start time for each activity, or an empty vector if the problem is infeasible
      */
-    vector<int> optimise();
+    vector<int> optimise() override;
 
 private:
     Problem& problem;

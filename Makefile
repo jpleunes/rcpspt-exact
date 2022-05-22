@@ -4,7 +4,7 @@ BUILD_DIR=build/
 CFLAGS=-Wall -std=c++17
 
 TARGET = $(BUILD_DIR)rcpspt-exact
-OBJS:=$(BUILD_DIR)Main.o $(BUILD_DIR)Problem.o $(BUILD_DIR)Parser.o $(BUILD_DIR)encoders/SmtEncoder.o $(BUILD_DIR)encoders/SatEncoder.o $(BUILD_DIR)encoders/ads/BDD.o $(BUILD_DIR)encoders/ads/PBConstr.o
+OBJS:=$(BUILD_DIR)Main.o $(BUILD_DIR)Problem.o $(BUILD_DIR)Parser.o $(BUILD_DIR)encoders/YicesEncoder.o $(BUILD_DIR)encoders/SmtEncoder.o $(BUILD_DIR)encoders/SatEncoder.o $(BUILD_DIR)encoders/ads/BDD.o $(BUILD_DIR)encoders/ads/PBConstr.o
 
 all : $(TARGET)
 
