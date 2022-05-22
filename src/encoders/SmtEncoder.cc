@@ -247,7 +247,9 @@ void SmtEncoder::encode() {
     formula = yices_and2(f_precedence, f_resource);
 }
 
-void SmtEncoder::solve(vector<int>& out) {
+vector<int> SmtEncoder::solve() {
+    vector<int> solution;
+
     // Pass formula to Yices
     int32_t code;
     code = yices_assert_formula(ctx, formula);
@@ -274,7 +276,7 @@ void SmtEncoder::solve(vector<int>& out) {
                     }
                     else {
                         std::cout << "S_" << i << " = " << v << std::endl;
-                        out.push_back(v);
+                        solution.push_back(v);
                     }
                 }
 
@@ -296,6 +298,7 @@ void SmtEncoder::solve(vector<int>& out) {
             yices_print_error(stderr);
             break;
     }
+    return solution;
 }
 
 vector<int> SmtEncoder::optimise() {

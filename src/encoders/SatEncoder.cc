@@ -260,7 +260,9 @@ void SatEncoder::encode() {
     formula = yices_and2(f_precedence, f_resource);
 }
 
-void SatEncoder::solve(vector<int>& out) {
+vector<int> SatEncoder::solve() {
+    vector<int> solution;
+
     // Pass formula to Yices
     int32_t code;
     code = yices_assert_formula(ctx, formula);
@@ -291,7 +293,7 @@ void SatEncoder::solve(vector<int>& out) {
                         else {
                             if (v) {
                                 std::cout << "S_" << i << " = " << s << std::endl;
-                                out.push_back(s);
+                                solution.push_back(s);
                                 started = true;
                                 break;
                             }
@@ -318,6 +320,7 @@ void SatEncoder::solve(vector<int>& out) {
             yices_print_error(stderr);
             break;
     }
+    return solution;
 }
 
 vector<int> SatEncoder::optimise() {

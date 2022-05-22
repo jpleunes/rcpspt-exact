@@ -63,9 +63,9 @@ public:
     /**
      * Calls Yices to solve the feasibility problem with the current encoding.
      *
-     * @param out vector with the start time for each activity, will be empty if problem is unsatisfiable
+     * @return vector with the start time for each activity, will be empty if problem is unsatisfiable
      */
-    void solve(vector<int>& out);
+    vector<int> solve();
 
     /**
      * Finds the optimal solution by calling Yices repeatedly.
