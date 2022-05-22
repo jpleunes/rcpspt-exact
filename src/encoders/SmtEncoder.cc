@@ -92,6 +92,7 @@ void SmtEncoder::preprocess() {
                     for (int t = 0; t < problem.durations[a]; t++) rlb += problem.requests[a][k][t];
                 }
                 rlb /= maxCapacities[k];
+                // Difference compared to the paper by M. Bofill et al. (2020): use maxRlb instead of durations[i]+maxRlb, the latter was likely a mistake in the paper
                 if (rlb > maxRlb) maxRlb = rlb;
             }
             if (maxRlb > l[i][j]) {
