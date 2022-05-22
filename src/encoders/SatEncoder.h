@@ -67,6 +67,14 @@ public:
      */
     void solve(vector<int>& out);
 
+    /**
+     * Finds the optimal solution by calling Yices repeatedly.
+     * Starts with the given lower and upper bounds, and incrementally decreases the upper bound.
+     *
+     * @return vector with the start time for each activity, or an empty vector if the problem is infeasible
+     */
+    vector<int> optimise();
+
 private:
     Problem& problem;
 

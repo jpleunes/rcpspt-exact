@@ -319,3 +319,97 @@ void SatEncoder::solve(vector<int>& out) {
             break;
     }
 }
+
+vector<int> SatEncoder::optimise() {
+    // This optimisation procedure was inspired by the paper by M. Bofill et al. (2020) (reference in README.md)
+
+    vector<int> solution(problem.njobs);
+    int32_t code, v;
+    code = yices_assert_formula(ctx, formula);
+    if (code < 0) {
+        std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
+        yices_print_error(stderr);
+    }
+    smt_status_t status = yices_check_context(ctx, NULL);
+    model_t* model;
+    if (status == STATUS_SAT) {
+        model = yices_get_model(ctx, true);
+        if (model == NULL) {
+            std::cerr << "Error getting model" << std::endl;
+            yices_print_error(stderr);
+        }
+        else {
+            for (int i = 0; i < problem.njobs; i++) {
+                bool started = false;
+                for (int s = ES[i]; s <= LS[i]; s++) {
+                    code = yices_get_bool_value(model, y[i][-ES[i] + s], &v);
+                    if (code < 0) {
+                        std::cerr << "Cannot get model value " << i << std::endl;
+                        yices_print_error(stderr);
+                        break;
+                    }
+                    else {
+                        if (v) {
+                            solution[i] = s;
+                            started = true;
+                            break;
+                        }
+                    }
+                }
+                if (!started) std::cerr << "Job " << i << " was not started" << std::endl;
+            }
+            yices_free_model(model);
+        }
+        UB = solution.back() - 1;
+    }
+    else if (status == STATUS_UNSAT) return {};
+    else {
+        std::cerr << "Unknown status when checking satisfiability" << std::endl;
+        return {};
+    }
+    while (status == STATUS_SAT && UB >= LB) {
+        formula = yices_and2(formula, yices_not(y.back()[-ES.back() + UB + 1]));
+        code = yices_assert_formula(ctx, formula);
+        if (code < 0) {
+            std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
+            yices_print_error(stderr);
+        }
+        status = yices_check_context(ctx, NULL);
+        if (status == STATUS_SAT) {
+            model = yices_get_model(ctx, true);
+            if (model == NULL) {
+                std::cerr << "Error getting model" << std::endl;
+                yices_print_error(stderr);
+            }
+            else {
+                for (int i = 0; i < problem.njobs; i++) {
+                    bool started = false;
+                    for (int s = ES[i]; s <= LS[i]; s++) {
+                        code = yices_get_bool_value(model, y[i][-ES[i] + s], &v);
+                        if (code < 0) {
+                            std::cerr << "Cannot get model value " << i << std::endl;
+                            yices_print_error(stderr);
+                            break;
+                        }
+                        else {
+                            if (v) {
+                                solution[i] = s;
+                                started = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!started) std::cerr << "Job " << i << " was not started" << std::endl;
+                }
+                yices_free_model(model);
+            }
+            UB = solution.back() - 1;
+            std::cout << "Current makespan: " << solution.back() << std::endl; // line for debugging
+        }
+        else if (status != STATUS_UNSAT) {
+            std::cerr << "Unknown status when checking satisfiability" << std::endl;
+            return {};
+        }
+    }
+    return solution;
+}
