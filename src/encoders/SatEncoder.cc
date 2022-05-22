@@ -102,7 +102,7 @@ bool SatEncoder::preprocess() {
     return true;
 }
 
-void SatEncoder::initialize() {
+void SatEncoder::initialise() {
     yices_init();
 
     // Create the variables
@@ -119,7 +119,7 @@ void SatEncoder::initialize() {
 //    x.reserve(problem.njobs);
 //    for (int i = 0; i < problem.njobs; i++) {
 //        x.emplace_back();
-//        for (int t = ES[i]; t < LC[i]; t++) { // t in RTW(i) (run time window of activity i) TODO: check if < should not be <=
+//        for (int t = ES[i]; t < LC[i]; t++) { // t in RTW(i) (run time window of activity i) NOTE: check if < should not be <=
 //            term_t processb = yices_new_uninterpreted_term(yices_bool_type());
 //            x[i].push_back(processb);
 //        }

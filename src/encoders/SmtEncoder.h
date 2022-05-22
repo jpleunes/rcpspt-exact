@@ -47,7 +47,7 @@ public:
               LS(p.njobs),
               LC(p.njobs) {
         preprocess();
-        initialize();
+        initialise();
     }
     // Destructor
     ~SmtEncoder() {
@@ -56,7 +56,7 @@ public:
     }
 
     /**
-     * TODO
+     * Encodes the problem instance into SMT and stores the result in the 'formula' field.
      */
     void encode();
 
@@ -81,7 +81,7 @@ private:
     vector<vector<int>> Estar; // List of successors for each activity, in the extended precedence graph
     vector<vector<int>> l;     // Time lags for all pairs of activities
 
-    int LB, UB; // The lower and upper bounds for the makespan that are currently being used TODO: update LS and LC
+    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
 
     vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
@@ -100,9 +100,9 @@ private:
     void preprocess();
 
     /**
-     * TODO
+     * Initialises Yices solver, and creates (integer and Boolean) variables representing start times of activities.
      */
-    void initialize();
+    void initialise();
 };
 }
 

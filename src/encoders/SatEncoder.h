@@ -26,7 +26,7 @@ SOFTWARE.
 #include <vector>
 
 #include "../Problem.h"
-#include "yices.h" // TODO: remove Yices, write to file instead
+#include "yices.h"
 
 using namespace std;
 
@@ -47,7 +47,7 @@ public:
               LS(p.njobs),
               LC(p.njobs) {
         preprocessFeasible = preprocess();
-        initialize();
+        initialise();
     }
     // Destructor
     ~SatEncoder() {
@@ -56,7 +56,7 @@ public:
     }
 
     /**
-     * TODO
+     * Encodes the problem instance into CNF and stores the result in the 'formula' field.
      */
     void encode();
 
@@ -91,9 +91,9 @@ private:
     bool preprocess();
 
     /**
-     * TODO
+     * Initialises Yices solver, and creates (Boolean) variables representing start times of activities.
      */
-    void initialize();
+    void initialise();
 };
 }
 

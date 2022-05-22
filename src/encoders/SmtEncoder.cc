@@ -112,7 +112,7 @@ void SmtEncoder::preprocess() {
     }
 }
 
-void SmtEncoder::initialize() {
+void SmtEncoder::initialise() {
     yices_init();
 
     // Create the variables
@@ -360,7 +360,7 @@ vector<int> SmtEncoder::optimise() {
                 yices_free_model(model);
             }
             UB = solution.back() - 1;
-            std::cout << "Current makespan: " << solution.back() << std::endl; // TODO: remove (this line is for debugging)
+            std::cout << "Current makespan: " << solution.back() << std::endl; // line for debugging
         }
         else if (status != STATUS_UNSAT) {
             std::cerr << "Unknown status when checking satisfiability" << std::endl;
