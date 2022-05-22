@@ -205,7 +205,7 @@ pair<int, int> calcBoundsPriorityRule(Problem &problem) {
         if (schedule.back() >= 0 && schedule.back() < bestMakespan) bestMakespan = schedule.back();
     }
     // For the lower bound we use earliest start of end dummy activity (start is same as finish for this activity)
-    return {ef.back(), bestMakespan};
+    return {ef.back(), min(problem.horizon, bestMakespan)};
 }
 }
 
