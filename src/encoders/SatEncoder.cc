@@ -168,8 +168,9 @@ void SatEncoder::encode() {
             for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
                 vector<term_t> clause;
                 clause.push_back(yices_not(y[i][-ES[i] + s]));
-                // Also check t <= LS[j], in addition to the definition by Horbach, because resource constraints can cause 'gaps' between activities (j,i)
-                for (int t = ES[j]; t <= ES[i]-problem.durations[j] && t <= LS[j]; t++) {
+                // Also check t <= LS[j], in addition to the definition by Horbach, because for RCPSP/t resource constraints can cause 'gaps' between activities (j,i)
+                // Another difference: t <= ES[i]-durations[j] was replaced by t <= s-durations[j], the former definition was likely a mistake in the paper
+                for (int t = ES[j]; t <= s-problem.durations[j] && t <= LS[j]; t++) {
                     clause.push_back(y[j][-ES[j] + t]);
                 }
                 precedenceConstrs.push_back(yices_or(clause.size(), &clause.front()));
