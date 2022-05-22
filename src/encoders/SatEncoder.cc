@@ -159,8 +159,11 @@ void SatEncoder::encode() {
 //        }
 //    }
 
+    // Job 0 starts at 0
+    precedenceConstrs.push_back(y[0][0]);
+
     // Precedence clauses
-    for (int i = 0; i < problem.njobs; i++) {
+    for (int i = 1; i < problem.njobs; i++) {
         for (int j : problem.predecessors[i]) {
             for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
                 vector<term_t> clause;
@@ -168,8 +171,6 @@ void SatEncoder::encode() {
                 // Also check t <= LS[j], in addition to the definition by Horbach, because resource constraints can cause 'gaps' between activities (j,i)
                 for (int t = ES[j]; t <= ES[i]-problem.durations[j] && t <= LS[j]; t++) {
                     clause.push_back(y[j][-ES[j] + t]);
-                    int32_t test = yices_term_is_bool(y[j][-ES[j] + t]);
-                    if (!test) std::cerr << "invalid term!!!" << std::endl;
                 }
                 precedenceConstrs.push_back(yices_or(clause.size(), &clause.front()));
             }
@@ -177,7 +178,7 @@ void SatEncoder::encode() {
     }
 
     // Start clauses
-    for (int i = 0; i < problem.njobs; i++) {
+    for (int i = 1; i < problem.njobs; i++) {
         vector<term_t> clause;
         for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
             clause.push_back(y[i][-ES[i] + s]);
