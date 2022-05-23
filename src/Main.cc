@@ -23,6 +23,7 @@ SOFTWARE.
 #include <csignal>
 #include <iostream>
 #include <fstream>
+#include <ctime>
 
 #include "Problem.h"
 #include "Parser.h"
@@ -112,8 +113,15 @@ int main(int argc, char** argv) {
         std::cout << "Argument encoder[smt/sat] not recognised" << std::endl;
         return 1;
     }
+
+    clock_t t_start_enc = clock();
     enc->encode();
+    measurements.t_enc = (long)((clock() - t_start_enc) * 1000 / CLOCKS_PER_SEC);
+
+    clock_t t_start_search = clock();
     enc->optimise();
+    measurements.t_search = (long)((clock() - t_start_search) * 1000 / CLOCKS_PER_SEC);
+
     enc->printResults();
 
     delete enc;

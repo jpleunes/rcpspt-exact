@@ -34,7 +34,7 @@ void YicesEncoder::printResults() const {
     std::cout << measurements->enc_n_intv << ", ";
     std::cout << measurements->enc_n_clause << ", ";
     std::cout << measurements->t_enc << ", ";
-    std::cout << measurements->t_solve << ", ";
+    std::cout << measurements->t_search << ", ";
     std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << ", ";
     std::cout << measurements->makespan << ", ";
     std::cout << measurements->valid << ", ";

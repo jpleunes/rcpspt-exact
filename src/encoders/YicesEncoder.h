@@ -38,7 +38,7 @@ struct Measurements {
     int enc_n_intv = 0; // Number of integer variables in encoding
     int enc_n_clause = 0; // Number of clauses in encoding
     long t_enc = 0; // Time in ms spent on encoding
-    long t_solve = 0; // Time in ms spent on solving
+    long t_search = 0; // Time in ms spent on searching (optimising)
     int makespan = -1; // Best makespan so far (-1 if no solution)
     bool valid = false; // Whether the current best solution has been checked for validity
     bool certified = false; // Whether the current best solution has been proven optimal (or infeasible)
