@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
+#include <csignal>
 #include <iostream>
 #include <fstream>
 
@@ -70,7 +71,26 @@ bool checkValid(const Problem& problem, const vector<int>& solution) {
     return true;
 }
 
+YicesEncoder* enc;
+
+void signal_handler(int signal_num) {
+    if (enc == nullptr) exit(1);
+//    std::cout << "received signal " << signal_num << std::endl;
+    smt_status_t status = yices_context_status(enc->ctx);
+    if (status == STATUS_SEARCHING) yices_stop_search(enc->ctx);
+    else {
+        enc->printResults();
+        exit(1);
+    }
+}
+
 int main(int argc, char** argv) {
+    // register termination signal
+    signal(SIGTERM, signal_handler);
+    signal(SIGKILL, signal_handler);
+    signal(SIGINT, signal_handler);
+    signal(SIGABRT, signal_handler);
+
     if (argc < 3) {
         std::cout << "Please provide the following arguments: encoder[smt/sat] input[path_to_file]" << std::endl;
         return 1;
@@ -81,7 +101,6 @@ int main(int argc, char** argv) {
     inpFile.close();
 
     pair<int,int> bounds = calcBoundsPriorityRule(problem);
-    YicesEncoder* enc = nullptr;
     if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds);
     else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds);
     else {
@@ -89,12 +108,8 @@ int main(int argc, char** argv) {
         return 1;
     }
     enc->encode();
-    vector<int> result = enc->optimise();
-    if (!result.empty()) {
-        std::cout << "Makespan: " << result.back() << std::endl;
-        bool valid = checkValid(problem, result);
-        std::cout << "Valid? " << valid << std::endl;
-    }
+    enc->optimise();
+    enc->printResults();
 
     delete enc;
     return 0;

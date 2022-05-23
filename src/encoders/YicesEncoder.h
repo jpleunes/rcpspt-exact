@@ -24,6 +24,7 @@ SOFTWARE.
 #define RCPSPT_EXACT_YICESENCODER_H
 
 #include "../Problem.h"
+#include "yices.h"
 
 namespace RcpsptExact {
 class YicesEncoder {
@@ -32,6 +33,8 @@ public:
     virtual void encode() = 0;
     virtual vector<int> solve() = 0;
     virtual vector<int> optimise() = 0;
+    void printResults();
+    context_t* ctx; // Yices context
 };
 }
 

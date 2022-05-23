@@ -344,6 +344,10 @@ vector<int> SmtEncoder::optimise() {
         }
         UB = solution.back() - 1;
     }
+    else if (status == STATUS_INTERRUPTED) {
+//        std::cout << "Search was interrupted" << std::endl;
+        return {}; // TODO return best solution so far (also use heuristic solution initially)
+    }
     else if (status == STATUS_UNSAT) return {};
     else {
         std::cerr << "Unknown status when checking satisfiability" << std::endl;
@@ -375,7 +379,11 @@ vector<int> SmtEncoder::optimise() {
                 yices_free_model(model);
             }
             UB = solution.back() - 1;
-            std::cout << "Current makespan: " << solution.back() << std::endl; // line for debugging
+//            std::cout << "Current makespan: " << solution.back() << std::endl; // line for debugging
+        }
+        else if (status == STATUS_INTERRUPTED) {
+//            std::cout << "Search was interrupted" << std::endl;
+            return {}; // TODO return best solution so far (also use heuristic solution initially)
         }
         else if (status != STATUS_UNSAT) {
             std::cerr << "Unknown status when checking satisfiability" << std::endl;

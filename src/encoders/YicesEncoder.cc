@@ -20,8 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
+#include <iostream>
+
 #include "YicesEncoder.h"
 
 using namespace RcpsptExact;
 
 YicesEncoder::~YicesEncoder() = default;
+
+void YicesEncoder::printResults() {
+    std::cout << "my results..." << std::endl; // TODO
+}

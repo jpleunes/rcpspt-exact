@@ -26,7 +26,6 @@ SOFTWARE.
 #include <vector>
 
 #include "YicesEncoder.h"
-#include "yices.h"
 
 using namespace std;
 
@@ -60,6 +59,7 @@ public:
     /**
      * Finds the optimal solution by calling Yices repeatedly.
      * Starts with the given lower and upper bounds, and incrementally decreases the upper bound.
+     * TODO: explain interruption behaviour
      *
      * @return vector with the start time for each activity, or an empty vector if the problem is infeasible
      */
@@ -77,8 +77,6 @@ private:
 
     vector<term_t> S; // Variable S_i: start time of activity i
     vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
-
-    context_t* ctx; // Yices context
 
     term_t formula; // Formula that will be used when calling solve()
 
