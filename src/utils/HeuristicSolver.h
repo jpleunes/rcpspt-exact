@@ -128,8 +128,8 @@ pair<int, int> calcBoundsPriorityRule(Problem &problem) {
         cpru[job] = cp * ru[job];
     }
 
-    random_device rd;
-    default_random_engine eng(rd());
+    //random_device rd;
+    default_random_engine eng(42); // Set seed for deterministic bounds to compare different encodings/solvers
     uniform_real_distribution<double> distribution(0, 1);
     // Run a number of passes ('tournaments'), as described by Hartmann (2013) (reference in README.md)
     vector<vector<int>> available(problem.nresources);
