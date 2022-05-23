@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
     Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
+    clock_t t_start_enc = clock();
     pair<int,int> bounds = calcBoundsPriorityRule(problem);
     if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds, &measurements);
     else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds, &measurements);
@@ -113,8 +114,6 @@ int main(int argc, char** argv) {
         std::cout << "Argument encoder[smt/sat] not recognised" << std::endl;
         return 1;
     }
-
-    clock_t t_start_enc = clock();
     enc->encode();
     measurements.t_enc = (long)((clock() - t_start_enc) * 1000 / CLOCKS_PER_SEC);
 
