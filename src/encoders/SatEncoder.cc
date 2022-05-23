@@ -31,7 +31,7 @@ SOFTWARE.
 
 using namespace RcpsptExact;
 
-SatEncoder::SatEncoder(Problem &p, pair<int, int> bounds)
+SatEncoder::SatEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
         : problem(p),
           LB(bounds.first),
           UB(bounds.second),
@@ -39,6 +39,7 @@ SatEncoder::SatEncoder(Problem &p, pair<int, int> bounds)
           EC(p.njobs),
           LS(p.njobs),
           LC(p.njobs) {
+    measurements = m;
     preprocessFeasible = preprocess();
     initialise();
 }
@@ -125,6 +126,7 @@ void SatEncoder::initialise() {
         for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
             term_t startb = yices_new_uninterpreted_term(yices_bool_type());
             y[i].push_back(startb);
+            measurements->enc_n_boolv++;
         }
     }
 
@@ -134,6 +136,7 @@ void SatEncoder::initialise() {
 //        for (int t = ES[i]; t < LC[i]; t++) { // t in RTW(i) (run time window of activity i) NOTE: check if < should not be <=
 //            term_t processb = yices_new_uninterpreted_term(yices_bool_type());
 //            x[i].push_back(processb);
+//            measurements->enc_n_boolv++;
 //        }
 //    }
 
@@ -167,12 +170,14 @@ void SatEncoder::encode() {
 //        for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
 //            for (int t = s; t < s + problem.durations[i]; t++) {
 //                precedenceConstrs.push_back(yices_or2(yices_not(y[i][-ES[i] + s]), x[i][-ES[i] + t]));
+//                measurements->enc_n_clause++;
 //            }
 //        }
 //    }
 
     // Job 0 starts at 0
     precedenceConstrs.push_back(y[0][0]);
+    measurements->enc_n_clause++;
 
     // Precedence clauses
     for (int i = 1; i < problem.njobs; i++) {
@@ -186,6 +191,7 @@ void SatEncoder::encode() {
                     clause.push_back(y[j][-ES[j] + t]);
                 }
                 precedenceConstrs.push_back(yices_or(clause.size(), &clause.front()));
+                measurements->enc_n_clause++;
             }
         }
     }
@@ -197,6 +203,7 @@ void SatEncoder::encode() {
             clause.push_back(y[i][-ES[i] + s]);
         }
         precedenceConstrs.push_back(yices_or(clause.size(), &clause.front()));
+        measurements->enc_n_clause++;
     }
 
     // Add resource constraints
@@ -252,17 +259,20 @@ void SatEncoder::encode() {
             }
         }
         if (auxTerminalF == -1) continue; // Skip if the constraint cannot be falsified
+        int* measure_bools = &(measurements->enc_n_boolv); // Keep track of the number of boolean variables that is being created
         for (BDD* node : nodes) {
             if (node->terminal()) continue;
             term_t selector = y[node->selector.first][node->selector.second];
             // Add two clauses
-            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(), yices_not(node->getAux())));
-            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(), yices_not(selector), yices_not(node->getAux())));
+            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(measure_bools), yices_not(node->getAux(measure_bools))));
+            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(measure_bools), yices_not(selector), yices_not(node->getAux(measure_bools))));
+            measurements->enc_n_clause += 2;
         }
         // Add three unary clauses
-        resourceConstrs.push_back(nodes[auxRoot]->getAux());
-        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux()));
-        resourceConstrs.push_back(nodes[auxTerminalT]->getAux());
+        resourceConstrs.push_back(nodes[auxRoot]->getAux(measure_bools));
+        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux(measure_bools)));
+        resourceConstrs.push_back(nodes[auxTerminalT]->getAux(measure_bools));
+        measurements->enc_n_clause += 3;
 
         for (BDD* node : nodes) if (!node->terminal()) delete node;
     }

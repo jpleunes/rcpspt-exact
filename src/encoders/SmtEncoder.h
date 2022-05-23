@@ -37,7 +37,7 @@ namespace RcpsptExact {
 class SmtEncoder : public YicesEncoder {
 public:
     // Constructor
-    SmtEncoder(Problem& p, pair<int,int> bounds);
+    SmtEncoder(Problem& p, pair<int,int> bounds, Measurements* m);
     // Destructor
     ~SmtEncoder() {
         yices_free_context(ctx);

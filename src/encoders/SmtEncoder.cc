@@ -30,7 +30,7 @@ SOFTWARE.
 
 using namespace RcpsptExact;
 
-SmtEncoder::SmtEncoder(Problem &p, pair<int, int> bounds)
+SmtEncoder::SmtEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
         : problem(p),
           LB(bounds.first),
           UB(bounds.second),
@@ -38,6 +38,7 @@ SmtEncoder::SmtEncoder(Problem &p, pair<int, int> bounds)
           EC(p.njobs),
           LS(p.njobs),
           LC(p.njobs) {
+    measurements = m;
     preprocess();
     initialise();
 }
@@ -133,6 +134,7 @@ void SmtEncoder::initialise() {
     for (int i = 0; i < problem.njobs; i++) {
         term_t startt = yices_new_uninterpreted_term(yices_int_type());
         S.push_back(startt);
+        measurements->enc_n_intv++;
     }
 
     y.reserve(problem.njobs);
@@ -141,6 +143,7 @@ void SmtEncoder::initialise() {
         for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
             term_t startb = yices_new_uninterpreted_term(yices_bool_type());
             y[i].push_back(startb);
+            measurements->enc_n_boolv++;
         }
     }
 
@@ -161,18 +164,24 @@ void SmtEncoder::encode() {
 
     // Initial dummy activity starts at 0
     precedenceConstrs.push_back(yices_arith_eq0_atom(S[0]));
+    measurements->enc_n_clause++;
 
     // Start variables must be within time windows
-    for (int i = 1; i < problem.njobs; i++)
+    for (int i = 1; i < problem.njobs; i++) {
         precedenceConstrs.push_back(yices_arith_geq_atom(S[i], yices_int32(ES[i])));
-    for (int i = 1; i < problem.njobs; i++)
+        measurements->enc_n_clause++;
+    }
+    for (int i = 1; i < problem.njobs; i++) {
         precedenceConstrs.push_back(yices_arith_leq_atom(S[i], yices_int32(LS[i])));
+        measurements->enc_n_clause++;
+    }
 
     // Enforce extended precedences
     for (int i = 0; i < problem.njobs; i++) {
         for (int j : Estar[i]) {
             if (i == j) continue;
             precedenceConstrs.push_back(yices_arith_geq_atom(yices_sub(S[j], S[i]), yices_int32(l[i][j])));
+            measurements->enc_n_clause++;
         }
     }
 
@@ -183,6 +192,7 @@ void SmtEncoder::encode() {
             // encoded into (~y_(i,t) v (S_i = t)) ^ (~(S_i = t) v y_(i,t))
             precedenceConstrs.push_back(yices_or2(yices_not(y[i][-ES[i] + t]), yices_arith_eq_atom(S[i], yices_int32(t))));
             precedenceConstrs.push_back(yices_or2(yices_not(yices_arith_eq_atom(S[i], yices_int32(t))), y[i][-ES[i] + t]));
+            measurements->enc_n_clause += 2;
         }
     }
 
@@ -239,17 +249,18 @@ void SmtEncoder::encode() {
             }
         }
         if (auxTerminalF == -1) continue; // Skip if the constraint cannot be falsified
+        int* measure_bools = &(measurements->enc_n_boolv);
         for (BDD* node : nodes) {
             if (node->terminal()) continue;
             term_t x = y[node->selector.first][node->selector.second];
             // Add two clauses
-            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(), yices_not(node->getAux())));
-            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(), yices_not(x), yices_not(node->getAux())));
+            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(measure_bools), yices_not(node->getAux(measure_bools))));
+            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(measure_bools), yices_not(x), yices_not(node->getAux(measure_bools))));
         }
         // Add three unary clauses
-        resourceConstrs.push_back(nodes[auxRoot]->getAux());
-        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux()));
-        resourceConstrs.push_back(nodes[auxTerminalT]->getAux());
+        resourceConstrs.push_back(nodes[auxRoot]->getAux(measure_bools));
+        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux(measure_bools)));
+        resourceConstrs.push_back(nodes[auxTerminalT]->getAux(measure_bools));
 
         for (BDD* node : nodes) if (!node->terminal()) delete node;
     }

@@ -28,6 +28,17 @@ using namespace RcpsptExact;
 
 YicesEncoder::~YicesEncoder() = default;
 
-void YicesEncoder::printResults() {
-    std::cout << "my results..." << std::endl; // TODO
+void YicesEncoder::printResults() const {
+    std::cout << measurements->file << ", ";
+    std::cout << measurements->enc_n_boolv << ", ";
+    std::cout << measurements->enc_n_intv << ", ";
+    std::cout << measurements->enc_n_clause << ", ";
+    std::cout << measurements->t_enc << ", ";
+    std::cout << measurements->t_solve << ", ";
+    std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << ", ";
+    std::cout << measurements->makespan << ", ";
+    std::cout << measurements->valid << ", ";
+    std::cout << measurements->certified << ", ";
+    for (int start : measurements->schedule) std::cout << start << ".";
+    std::cout << std::endl;
 }

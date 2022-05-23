@@ -96,13 +96,18 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::ifstream inpFile(argv[2]);
+    string filePath = argv[2];
+
+    Measurements measurements;
+    measurements.file = filePath;
+
+    std::ifstream inpFile(filePath);
     Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
     pair<int,int> bounds = calcBoundsPriorityRule(problem);
-    if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds);
-    else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds);
+    if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds, &measurements);
+    else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds, &measurements);
     else {
         std::cout << "Argument encoder[smt/sat] not recognised" << std::endl;
         return 1;

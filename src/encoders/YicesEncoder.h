@@ -23,18 +23,49 @@ SOFTWARE.
 #ifndef RCPSPT_EXACT_YICESENCODER_H
 #define RCPSPT_EXACT_YICESENCODER_H
 
+#include <ctime>
+
 #include "../Problem.h"
 #include "yices.h"
 
 namespace RcpsptExact {
+/**
+ * TODO
+ */
+struct Measurements {
+    string file; // Input file path
+    int enc_n_boolv = 0; // Number of Boolean variables in encoding
+    int enc_n_intv = 0; // Number of integer variables in encoding
+    int enc_n_clause = 0; // Number of clauses in encoding
+    long t_enc = 0; // Time in ms spent on encoding
+    long t_solve = 0; // Time in ms spent on solving
+    int makespan = -1; // Best makespan so far (-1 if no solution)
+    bool valid = false; // Whether the current best solution has been checked for validity
+    bool certified = false; // Whether the current best solution has been proven optimal (or infeasible)
+    vector<int> schedule = {}; // Current best solution
+};
+
+/**
+ * Abstract base class for encoders that use the Yices C API.
+ */
 class YicesEncoder {
 public:
     virtual ~YicesEncoder();
     virtual void encode() = 0;
     virtual vector<int> solve() = 0;
     virtual vector<int> optimise() = 0;
-    void printResults();
+
+    /**
+     * Outputs measurement results to the console, in the following format:
+     * file, enc_n_boolv, enc_n_intv, enc_n_clause, t_enc, t_solve, t_total, makespan, valid, certified, schedule
+     *
+     * An example would look like this:
+     * path/to/file.smt, 12, 5, 60, 65, 128, 300, 20, 1, 1, 0.0.3.4.7.
+     */
+    void printResults() const;
+
     context_t* ctx; // Yices context
+    Measurements* measurements;
 };
 }
 

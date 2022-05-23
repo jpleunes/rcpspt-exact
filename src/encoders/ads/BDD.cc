@@ -33,8 +33,11 @@ BDD::BDD(bool termValue)
 BDD::BDD(const pair<int, int> &selector, BDD *falseBranch, BDD *trueBranch)
         : selector(selector), fBranch(falseBranch), tBranch(trueBranch), term(-1), visited(false), aux(-1) {}
 
-term_t BDD::getAux() {
-    if (aux == -1) aux = yices_new_uninterpreted_term(yices_bool_type());
+term_t BDD::getAux(int* measure_bools) {
+    if (aux == -1) {
+        aux = yices_new_uninterpreted_term(yices_bool_type());
+        (*measure_bools)++;
+    }
     return aux;
 }
 

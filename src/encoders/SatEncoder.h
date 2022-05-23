@@ -37,7 +37,7 @@ namespace RcpsptExact {
 class SatEncoder : public YicesEncoder {
 public:
     // Constructor
-    SatEncoder(Problem& p, pair<int,int> bounds);
+    SatEncoder(Problem& p, pair<int,int> bounds, Measurements* m);
     // Destructor
     ~SatEncoder() {
         yices_free_context(ctx);

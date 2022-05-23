@@ -60,7 +60,7 @@ public:
     BDD* fBranch; // Child for the 'False' branch
     BDD* tBranch; // Child for the 'True' branch
 
-    term_t getAux();
+    term_t getAux(int* measure_bools);
 
     bool terminal() const;
 
