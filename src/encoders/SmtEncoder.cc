@@ -23,6 +23,7 @@ SOFTWARE.
 #include <algorithm>
 #include <iostream>
 #include <cmath>
+#include <queue>
 
 #include "SmtEncoder.h"
 #include "ads/BDD.h"
@@ -31,15 +32,8 @@ SOFTWARE.
 using namespace RcpsptExact;
 
 SmtEncoder::SmtEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
-        : problem(p),
-          LB(bounds.first),
-          UB(bounds.second),
-          ES(p.njobs),
-          EC(p.njobs),
-          LS(p.njobs),
-          LC(p.njobs) {
-    measurements = m;
-    preprocess();
+        : YicesEncoder(p, bounds, m) {
+    preprocessFeasible = preprocess();
     initialise();
 }
 
@@ -55,7 +49,7 @@ void SmtEncoder::floydWarshall() {
     }
 }
 
-void SmtEncoder::preprocess() {
+bool SmtEncoder::preprocess() {
     // These preprocessing steps follow the paper by M. Bofill et al. (2020) (reference in README.md)
 
     // Calculate the extended precedence graph with time lags, using the Floyd-Warshall algorithm (https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm)
@@ -117,12 +111,13 @@ void SmtEncoder::preprocess() {
     }
 
     // Set the time windows for the activities
-    for (int i = 0; i < problem.njobs; i++) {
-        ES[i] = l[0][i];
-        EC[i] = l[0][i] + problem.durations[i];
-        LS[i] = UB - l[i][problem.njobs - 1];
-        LC[i] = UB - l[i][problem.njobs - 1] + problem.durations[i];
-    }
+    return calcTimeWindows();
+//    for (int i = 0; i < problem.njobs; i++) {
+//        ES[i] = l[0][i];
+//        EC[i] = l[0][i] + problem.durations[i];
+//        LS[i] = UB - l[i][problem.njobs - 1];
+//        LC[i] = UB - l[i][problem.njobs - 1] + problem.durations[i];
+//    }
 }
 
 void SmtEncoder::initialise() {
@@ -157,6 +152,12 @@ void SmtEncoder::initialise() {
 
 void SmtEncoder::encode() {
     // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md)
+
+    if (!preprocessFeasible) {
+        std::cout << "Preprocessing found instance to be infeasible" << std::endl;
+        formula = yices_false();
+        return;
+    }
 
     // Add precedence constraints
 

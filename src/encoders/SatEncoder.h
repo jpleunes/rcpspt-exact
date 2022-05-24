@@ -64,16 +64,8 @@ public:
     void optimise() override;
 
 private:
-    Problem& problem;
-
-    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
-
-    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
-
     vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
 //    vector<vector<term_t>> x; // Variable x_(i,t): boolean representing whether activity i is running at time t in RTW(i)
-
-    term_t formula; // Formula that will be used when calling solve()
 
     bool preprocessFeasible;
 

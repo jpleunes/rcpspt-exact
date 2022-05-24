@@ -33,45 +33,6 @@ SOFTWARE.
 
 using namespace RcpsptExact;
 
-bool checkValid(const Problem& problem, const vector<int>& solution) {
-    // Initialize remaining resource availabilities
-    int** available = new int*[problem.nresources];
-    for (int k = 0; k < problem.nresources; k++) {
-        available[k] = new int[problem.horizon];
-        for (int t = 0; t < problem.horizon; t++)
-            available[k][t] = problem.capacities[k][t];
-    }
-
-    for (int job = 0; job < problem.njobs; job++) {
-        // Precedence constraints
-        for (int predecessor: problem.predecessors[job]) {
-            if (solution[job] < solution[predecessor] + problem.durations[predecessor]) {
-                std::cout << "invalid precedence!" << std::endl;
-                return false;
-            }
-        }
-    }
-
-    for (int job = 0; job < problem.njobs; job++) {
-        // Resource constraints
-        for (int k = 0; k < problem.nresources; k++) {
-            for (int t = 0; t < problem.durations[job]; t++) {
-                int curr = solution[job] + t;
-                available[k][curr] -= problem.requests[job][k][t];
-                if (available[k][curr] < 0) {
-                    std::cout << "resource demand exceeds availability at t=" << curr << '!' << std::endl;
-                    return false;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < problem.nresources; i++) delete[] available[i];
-    delete[] available;
-
-    return true;
-}
-
 YicesEncoder* enc;
 
 void signal_handler(int signal_num) {
@@ -121,7 +82,6 @@ int main(int argc, char** argv) {
     enc->optimise();
     measurements.t_search = (long)((clock() - t_start_search) * 1000 / CLOCKS_PER_SEC);
 
-    measurements.valid = checkValid(problem, measurements.schedule);
     enc->printResults();
 
     delete enc;

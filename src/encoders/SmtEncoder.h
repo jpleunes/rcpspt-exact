@@ -64,26 +64,22 @@ public:
     void optimise() override;
 
 private:
-    Problem& problem;
-
     vector<vector<int>> Estar; // List of successors for each activity, in the extended precedence graph
     vector<vector<int>> l;     // Time lags for all pairs of activities
-
-    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
-
-    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
     vector<term_t> S; // Variable S_i: start time of activity i
     vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
 
-    term_t formula; // Formula that will be used when calling solve()
-
     void floydWarshall();
+
+    bool preprocessFeasible;
 
     /**
      * Perform preprocessing to reduce the amount of variables in the final encoding.
+     *
+     * @return false if preprocessing finds the instance to be infeasible, true otherwise
      */
-    void preprocess();
+    bool preprocess();
 
     /**
      * Initialises Yices solver, and creates (integer and Boolean) variables representing start times of activities.
