@@ -56,15 +56,15 @@ void SatEncoder::initialise() {
         }
     }
 
-//    x.reserve(problem.njobs);
-//    for (int i = 0; i < problem.njobs; i++) {
-//        x.emplace_back();
-//        for (int t = ES[i]; t < LC[i]; t++) { // t in RTW(i) (run time window of activity i) NOTE: check if < should not be <=
-//            term_t processb = yices_new_uninterpreted_term(yices_bool_type());
-//            x[i].push_back(processb);
-//            measurements->enc_n_boolv++;
-//        }
-//    }
+    x.reserve(problem.njobs);
+    for (int i = 0; i < problem.njobs; i++) {
+        x.emplace_back();
+        for (int t = ES[i]; t <= LC[i]; t++) {
+            term_t processb = yices_new_uninterpreted_term(yices_bool_type());
+            x[i].push_back(processb);
+            measurements->enc_n_boolv++;
+        }
+    }
 
     // Create multi-check context, that uses propositional logic solver
     ctx_config_t* config = yices_new_config();
@@ -92,14 +92,14 @@ void SatEncoder::encode() {
     vector<term_t> precedenceConstrs;
 
     // Consistency clauses
-//    for (int i = 0; i < problem.njobs; i++) {
-//        for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
-//            for (int t = s; t < s + problem.durations[i]; t++) {
-//                precedenceConstrs.push_back(yices_or2(yices_not(y[i][-ES[i] + s]), x[i][-ES[i] + t]));
-//                measurements->enc_n_clause++;
-//            }
-//        }
-//    }
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int s = ES[i]; s <= LS[i]; s++) { // s in STW(i)
+            for (int t = s; t < s + problem.durations[i]; t++) {
+                precedenceConstrs.push_back(yices_or2(yices_not(y[i][-ES[i] + s]), x[i][-ES[i] + t]));
+                measurements->enc_n_clause++;
+            }
+        }
+    }
 
     // Job 0 starts at 0
     precedenceConstrs.push_back(y[0][0]);
@@ -130,6 +130,14 @@ void SatEncoder::encode() {
         }
         precedenceConstrs.push_back(yices_or(clause.size(), &clause.front()));
         measurements->enc_n_clause++;
+    }
+
+    // Add redundant clauses that should improve runtime
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int c = EC[i]; c < LC[i]; c++) {
+            precedenceConstrs.push_back(yices_or3(yices_not(x[i][-ES[i] + c]), x[i][-ES[i] + c+1], y[i][-ES[i] + c-problem.durations[i]+1]));
+            measurements->enc_n_clause++;
+        }
     }
 
     // Add resource constraints

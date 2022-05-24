@@ -65,7 +65,7 @@ public:
 
 private:
     vector<vector<term_t>> y; // Variable y_(i,t): boolean representing whether activity i starts at time t in STW(i)
-//    vector<vector<term_t>> x; // Variable x_(i,t): boolean representing whether activity i is running at time t in RTW(i)
+    vector<vector<term_t>> x; // Variable x_(i,t): boolean representing whether activity i is running at time t in RTW(i)
 
     bool preprocessFeasible;
 
