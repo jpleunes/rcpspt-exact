@@ -39,10 +39,9 @@ struct Measurements {
     int enc_n_clause = 0; // Number of clauses in encoding
     long t_enc = 0; // Time in ms spent on encoding
     long t_search = 0; // Time in ms spent on searching (optimising)
-    int makespan = -1; // Best makespan so far (-1 if no solution)
     bool valid = false; // Whether the current best solution has been checked for validity
     bool certified = false; // Whether the current best solution has been proven optimal (or infeasible)
-    vector<int> schedule = {}; // Current best solution
+    vector<int> schedule = {}; // Current best solution (after optimisation: empty vector if problem is infeasible)
 };
 
 /**
@@ -53,7 +52,7 @@ public:
     virtual ~YicesEncoder();
     virtual void encode() = 0;
     virtual vector<int> solve() = 0;
-    virtual vector<int> optimise() = 0;
+    virtual void optimise() = 0;
 
     /**
      * Outputs measurement results to the console, in the following format:

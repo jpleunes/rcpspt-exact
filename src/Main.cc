@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     inpFile.close();
 
     clock_t t_start_enc = clock();
-    pair<int,int> bounds = calcBoundsPriorityRule(problem);
+    pair<int,int> bounds = calcBoundsPriorityRule(problem, measurements.schedule);
     if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds, &measurements);
     else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds, &measurements);
     else {
@@ -121,6 +121,7 @@ int main(int argc, char** argv) {
     enc->optimise();
     measurements.t_search = (long)((clock() - t_start_search) * 1000 / CLOCKS_PER_SEC);
 
+    measurements.valid = checkValid(problem, measurements.schedule);
     enc->printResults();
 
     delete enc;

@@ -345,10 +345,9 @@ vector<int> SatEncoder::solve() {
     return solution;
 }
 
-vector<int> SatEncoder::optimise() {
+void SatEncoder::optimise() {
     // This optimisation procedure was inspired by the paper by M. Bofill et al. (2020) (reference in README.md)
 
-    vector<int> solution(problem.njobs);
     int32_t code, v;
     code = yices_assert_formula(ctx, formula);
     if (code < 0) {
@@ -375,7 +374,7 @@ vector<int> SatEncoder::optimise() {
                     }
                     else {
                         if (v) {
-                            solution[i] = s;
+                            measurements->schedule[i] = s;
                             started = true;
                             break;
                         }
@@ -385,18 +384,22 @@ vector<int> SatEncoder::optimise() {
             }
             yices_free_model(model);
         }
-        UB = solution.back() - 1;
+        UB = measurements->schedule.back() - 1;
     }
     else if (status == STATUS_INTERRUPTED) {
 //        std::cout << "Search was interrupted" << std::endl;
-        return {}; // TODO return best solution so far (also use heuristic solution initially)
+        return;
     }
-    else if (status == STATUS_UNSAT) return {};
+    else if (status == STATUS_UNSAT) {
+        measurements->schedule.clear();
+        return;
+    }
     else {
         std::cerr << "Unknown status " << status << " when checking satisfiability" << std::endl;
-        return {};
+        return;
     }
     while (status == STATUS_SAT && UB >= LB) {
+        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
         formula = yices_and2(formula, yices_not(y.back()[-ES.back() + UB + 1]));
         code = yices_assert_formula(ctx, formula);
         if (code < 0) {
@@ -422,7 +425,7 @@ vector<int> SatEncoder::optimise() {
                         }
                         else {
                             if (v) {
-                                solution[i] = s;
+                                measurements->schedule[i] = s;
                                 started = true;
                                 break;
                             }
@@ -432,17 +435,17 @@ vector<int> SatEncoder::optimise() {
                 }
                 yices_free_model(model);
             }
-            UB = solution.back() - 1;
-//            std::cout << "Current makespan: " << solution.back() << std::endl; // line for debugging
+            UB = measurements->schedule.back() - 1;
         }
         else if (status == STATUS_INTERRUPTED) {
 //            std::cout << "Search was interrupted" << std::endl;
-            return {}; // TODO return best solution so far (also use heuristic solution initially)
+            return;
         }
         else if (status != STATUS_UNSAT) {
             std::cerr << "Unknown status when checking satisfiability" << std::endl;
-            return {};
+            return;
         }
     }
-    return solution;
+
+    if (status == STATUS_UNSAT) measurements->certified = true;
 }
