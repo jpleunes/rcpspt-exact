@@ -405,5 +405,5 @@ void SmtEncoder::optimise() {
         }
     }
 
-    if (status == STATUS_UNSAT) measurements->certified = true;
+    if (status == STATUS_UNSAT || UB < LB) measurements->certified = true;
 }
