@@ -112,6 +112,8 @@ bool YicesEncoder::calcTimeWindows() {
 }
 
 bool checkValid(const Problem& problem, const vector<int>& solution) {
+    if (solution.empty()) return false;
+
     // Initialize remaining resource availabilities
     int** available = new int*[problem.nresources];
     for (int k = 0; k < problem.nresources; k++) {

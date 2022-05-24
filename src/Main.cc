@@ -78,9 +78,15 @@ int main(int argc, char** argv) {
     enc->encode();
     measurements.t_enc = (long)((clock() - t_start_enc) * 1000 / CLOCKS_PER_SEC);
 
-    clock_t t_start_search = clock();
-    enc->optimise();
-    measurements.t_search = (long)((clock() - t_start_search) * 1000 / CLOCKS_PER_SEC);
+    if (!measurements.schedule.empty()) {
+        clock_t t_start_search = clock();
+        enc->optimise();
+        measurements.t_search = (long) ((clock() - t_start_search) * 1000 / CLOCKS_PER_SEC);
+    }
+    else {
+        measurements.t_search = 0;
+        measurements.certified = true;
+    }
 
     enc->printResults();
 

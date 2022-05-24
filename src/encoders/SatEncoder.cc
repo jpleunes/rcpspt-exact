@@ -82,7 +82,7 @@ void SatEncoder::encode() {
      */
 
     if (!preprocessFeasible) {
-        std::cout << "Preprocessing found instance to be infeasible" << std::endl;
+//        std::cout << "Preprocessing found instance to be infeasible" << std::endl;
         formula = yices_false();
         return;
     }

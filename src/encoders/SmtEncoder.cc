@@ -154,7 +154,7 @@ void SmtEncoder::encode() {
     // This SMT encoding follows the paper by M. Bofill et al. (2020) (reference in README.md)
 
     if (!preprocessFeasible) {
-        std::cout << "Preprocessing found instance to be infeasible" << std::endl;
+//        std::cout << "Preprocessing found instance to be infeasible" << std::endl;
         formula = yices_false();
         return;
     }
