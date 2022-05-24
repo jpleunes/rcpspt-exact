@@ -368,7 +368,7 @@ void SmtEncoder::optimise() {
         return;
     }
     while (status == STATUS_SAT && UB >= LB) {
-        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
+//        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
         formula = yices_and2(formula, yices_arith_leq_atom(S.back(), yices_int32(UB)));
         code = yices_assert_formula(ctx, formula);
         if (code < 0) {

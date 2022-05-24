@@ -333,7 +333,7 @@ void SatEncoder::optimise() {
         return;
     }
     while (status == STATUS_SAT && UB >= LB) {
-        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
+//        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
         formula = yices_and2(formula, yices_not(y.back()[-ES.back() + UB + 1]));
         code = yices_assert_formula(ctx, formula);
         if (code < 0) {
