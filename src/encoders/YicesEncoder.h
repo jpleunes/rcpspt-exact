@@ -39,7 +39,6 @@ struct Measurements {
     int enc_n_clause = 0; // Number of clauses in encoding
     long t_enc = 0; // Time in ms spent on encoding
     long t_search = 0; // Time in ms spent on searching (optimising)
-    bool valid = false; // Whether the current best solution has been checked for validity
     bool certified = false; // Whether the current best solution has been proven optimal (or infeasible)
     vector<int> schedule = {}; // Current best solution (after optimisation: empty vector if problem is infeasible)
 };
@@ -50,6 +49,14 @@ struct Measurements {
 class YicesEncoder {
 public:
     virtual ~YicesEncoder();
+
+    /**
+     * TODO
+     *
+     * @return
+     */
+    bool calcTimeWindows();
+
     virtual void encode() = 0;
     virtual vector<int> solve() = 0;
     virtual void optimise() = 0;
@@ -65,6 +72,17 @@ public:
 
     context_t* ctx; // Yices context
     Measurements* measurements;
+
+protected:
+    YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m);
+
+    Problem& problem;
+
+    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
+
+    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
+
+    term_t formula; // Formula that will be used when calling solve()
 };
 }
 
