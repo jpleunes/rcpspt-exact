@@ -290,6 +290,7 @@ void SatEncoder::optimise() {
     }
     smt_status_t status = yices_check_context(ctx, NULL);
     model_t* model;
+    int UB_old;
     if (status == STATUS_SAT) {
         model = yices_get_model(ctx, true);
         if (model == NULL) {
@@ -318,6 +319,7 @@ void SatEncoder::optimise() {
             }
             yices_free_model(model);
         }
+        UB_old = UB;
         UB = measurements->schedule.back() - 1;
     }
     else if (status == STATUS_INTERRUPTED) {
@@ -334,7 +336,8 @@ void SatEncoder::optimise() {
     }
     while (status == STATUS_SAT && UB >= LB) {
 //        std::cout << "Current makespan: " << measurements->schedule.back() << std::endl; // line for debugging
-        formula = yices_and2(formula, yices_not(y.back()[-ES.back() + UB + 1]));
+        for (int t = UB; t < UB_old; t++)
+            formula = yices_and2(formula, yices_not(y.back()[-ES.back() + t + 1]));
         code = yices_assert_formula(ctx, formula);
         if (code < 0) {
             std::cerr << "Assert failed: code = " << code << ", error = " << yices_error_code() << std::endl;
@@ -369,6 +372,7 @@ void SatEncoder::optimise() {
                 }
                 yices_free_model(model);
             }
+            UB_old = UB;
             UB = measurements->schedule.back() - 1;
         }
         else if (status == STATUS_INTERRUPTED) {
