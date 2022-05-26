@@ -38,7 +38,8 @@ namespace RcpsptExact {
  * Tournament heuristic using a priority rule, used for calculating initial lower and upper bounds on the makespan.
  *
  * @param problem problem instance to consider
- * @param solution vector in which to store final schedule (empty if infeasible)
+ * @param solution vector in which to store final schedule (empty if infeasible).
+ * Schedule may be invalid if no solution with makespan<horizon could be found
  * @return pair of integers (lower_bound, upper_bound)
  */
 pair<int, int> calcBoundsPriorityRule(const Problem& problem, vector<int>& solution) {
@@ -206,7 +207,7 @@ pair<int, int> calcBoundsPriorityRule(const Problem& problem, vector<int>& solut
         }
         if (schedule.back() >= 0 && schedule.back() < bestMakespan) bestMakespan = schedule.back();
     }
-    // Output the final schedule
+    // Output the final schedule (may be invalid)
     for (int i = 0; i < problem.njobs; i++) solution.push_back(schedule[i] - problem.durations[i]);
     // For the lower bound we use earliest start of end dummy activity (start is same as finish for this activity)
     return {ef.back(), min(problem.horizon, bestMakespan)};

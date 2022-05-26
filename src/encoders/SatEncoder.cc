@@ -328,6 +328,7 @@ void SatEncoder::optimise() {
     }
     else if (status == STATUS_UNSAT) {
         measurements->schedule.clear();
+        measurements->certified = true;
         return;
     }
     else {
