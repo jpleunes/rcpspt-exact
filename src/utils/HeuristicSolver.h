@@ -104,6 +104,14 @@ pair<int, int> calcBoundsPriorityRule(const Problem& problem, vector<int>& solut
         }
     }
 
+    // Check if any time window is too small: lf[i]-es[i]<durations[i]
+    // using the definition from Hartmann (2013) (reference in README.md)
+    for (int i = 0; i < problem.njobs; i++) {
+        if ((ls[i] + problem.durations[i]) - (ef[i] - problem.durations[i]) < problem.durations[i]) {
+            return {ef.back(), problem.horizon};
+        }
+    }
+
     // Calculate extended resource utilization values, using the definition from Hartmann (2013) (reference in README.md)
     vector<double> ru(problem.njobs);
     q.push(problem.njobs - 1); // Enqueue sink job
