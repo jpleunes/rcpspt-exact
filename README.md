@@ -1,4 +1,5 @@
 # SMT/SAT Encoder for Exact Solving of the RCPSP/t
+TODO: update
 Encodes a problem instance into the [SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml) using the C API provided by Yices 2, or into CNF (DIMACS format).
 This facilitates exact solving of the RCPSP/t (Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests) using SAT solvers.
 

@@ -255,14 +255,16 @@ void SmtEncoder::encode() {
             if (node->terminal()) continue;
             term_t x = y[node->selector.first][node->selector.second];
             // Add two clauses
-            resourceConstrs.push_back(yices_or2(node->fBranch->getAux(measure_bools), yices_not(node->getAux(measure_bools))));
-            resourceConstrs.push_back(yices_or3(node->tBranch->getAux(measure_bools), yices_not(x), yices_not(node->getAux(measure_bools))));
+            resourceConstrs.push_back(yices_or2(node->fBranch->getAuxYices(measure_bools), yices_not(
+                    node->getAuxYices(measure_bools))));
+            resourceConstrs.push_back(yices_or3(node->tBranch->getAuxYices(measure_bools), yices_not(x), yices_not(
+                    node->getAuxYices(measure_bools))));
             measurements->enc_n_clause += 2;
         }
         // Add three unary clauses
-        resourceConstrs.push_back(nodes[auxRoot]->getAux(measure_bools));
-        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAux(measure_bools)));
-        resourceConstrs.push_back(nodes[auxTerminalT]->getAux(measure_bools));
+        resourceConstrs.push_back(nodes[auxRoot]->getAuxYices(measure_bools));
+        resourceConstrs.push_back(yices_not(nodes[auxTerminalF]->getAuxYices(measure_bools)));
+        resourceConstrs.push_back(nodes[auxTerminalT]->getAuxYices(measure_bools));
         measurements->enc_n_clause += 3;
 
         for (BDD* node : nodes) if (!node->terminal()) delete node;

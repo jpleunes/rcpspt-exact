@@ -26,6 +26,7 @@ SOFTWARE.
 #include "Encoder.h"
 
 #include <string>
+#include <fstream>
 
 namespace RcpsptExact {
 
@@ -42,7 +43,7 @@ public:
      *
      * @param filePath
      */
-    void encodeAndWriteToFile(string filePath);
+    void encodeAndWriteToFile(string& filePath);
 
 private:
     bool preprocessFeasible;
@@ -53,6 +54,13 @@ private:
      * @return
      */
     bool preprocess();
+
+    /**
+     * Writes a trivially infeasible instance to the output file.
+     *
+     * @param outFile the file to write to
+     */
+    static void writeInfeasible(ofstream& outFile);
 };
 }
 

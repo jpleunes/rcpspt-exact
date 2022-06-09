@@ -30,6 +30,7 @@ SOFTWARE.
 #include "encoders/SmtEncoder.h"
 #include "encoders/SatEncoder.h"
 #include "utils/HeuristicSolver.h"
+#include "encoders/WcnfEncoder.h"
 
 using namespace RcpsptExact;
 
@@ -54,7 +55,7 @@ int main(int argc, char** argv) {
     signal(SIGABRT, signal_handler);
 
     if (argc < 3) {
-        std::cout << "Please provide the following arguments: encoder[smt/sat] input[path_to_file]" << std::endl;
+        std::cout << "Please provide the following arguments: encoder[smt/sat/maxsat] input[path_to_file] (for maxsat: output[file_name])" << std::endl;
         return 1;
     }
 
@@ -67,12 +68,27 @@ int main(int argc, char** argv) {
     Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
 
+    if ("maxsat" == string(argv[1])) {
+        if (argc < 4) {
+            std::cout << "Please provide the following arguments: encoder[smt/sat/maxsat] input[path_to_file] (for maxsat: output[file_name])" << std::endl;
+            return 1;
+        }
+
+        string outFilePath = argv[3];
+
+        pair<int,int> bounds = calcBoundsPriorityRule(problem, measurements.schedule);
+        WcnfEncoder maxSatEnc(problem, bounds);
+        maxSatEnc.encodeAndWriteToFile(outFilePath);
+
+        return 0;
+    }
+
     clock_t t_start_enc = clock();
     pair<int,int> bounds = calcBoundsPriorityRule(problem, measurements.schedule);
     if ("smt" == string(argv[1])) enc = new SmtEncoder(problem, bounds, &measurements);
     else if ("sat" == string(argv[1])) enc = new SatEncoder(problem, bounds, &measurements);
     else {
-        std::cout << "Argument encoder[smt/sat] not recognised" << std::endl;
+        std::cout << "Argument encoder[smt/sat/maxsat] not recognised" << std::endl;
         return 1;
     }
     enc->encode();
