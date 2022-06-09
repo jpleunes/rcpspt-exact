@@ -28,88 +28,11 @@ SOFTWARE.
 using namespace RcpsptExact;
 
 YicesEncoder::YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
-        : problem(p),
-          LB(bounds.first),
-          UB(bounds.second),
-          ES(p.njobs),
-          EC(p.njobs),
-          LS(p.njobs),
-          LC(p.njobs) {
+        : Encoder(p, bounds) {
     measurements = m;
 }
 
 YicesEncoder::~YicesEncoder() = default;
-
-bool YicesEncoder::calcTimeWindows() {
-    queue<int> q; // Use a queue for breadth-first traversal of the precedence graph
-
-    // Calculate earliest feasible finish (close) times, using the definition from Hartmann (2013) (reference in README.md)
-    for (int i = 0; i < problem.njobs; i++) EC[i] = 0;
-    q.push(0);
-    while(!q.empty()) {
-        int job = q.front();
-        q.pop();
-        int duration = problem.durations[job];
-        // Move finish until it is feasible considering resource constraints
-        bool feasibleFinal = false;
-        while (!feasibleFinal) {
-            bool feasible = true;
-            for (int k = 0; feasible && k < problem.nresources; k++) {
-                for (int t = duration - 1; feasible && t >= 0; t--) {
-                    if (problem.requests[job][k][t] > problem.capacities[k][EC[job] - duration + t]) {
-                        feasible = false;
-                        EC[job]++;
-                    }
-                }
-            }
-            if (feasible) feasibleFinal = true;
-            if (EC[job] > UB) return false;
-        }
-        // Update finish times, and enqueue successors
-        for (int succ : problem.successors[job]) {
-            int c = EC[job] + problem.durations[succ];
-            if (c > EC[succ]) EC[succ] = c; // Use maximum values, because we are interested in critical paths
-            q.push(succ); // Enqueue successor
-        }
-    }
-
-    // Calculate latest feasible start times, again using the definition from Hartmann (2013) (reference in README.md)
-    for (int i = 0; i < problem.njobs; i++) LS[i] = UB;
-    q.push(problem.njobs - 1);
-    while(!q.empty()) {
-        int job = q.front();
-        q.pop();
-        int duration = problem.durations[job];
-        // Move start until it is feasible considering resource constraints
-        bool feasibleFinal = false;
-        while (!feasibleFinal) {
-            bool feasible = true;
-            for (int k = 0; feasible && k < problem.nresources; k++) {
-                for (int t = 0; feasible && t < duration; t++) {
-                    if (problem.requests[job][k][t] > problem.capacities[k][LS[job] + t]) {
-                        feasible = false;
-                        LS[job]--;
-                    }
-                }
-            }
-            if (feasible) feasibleFinal = true;
-            if (LS[job] < 0) return false;
-        }
-        // Update start times, and enqueue predecessors
-        for (int pred : problem.predecessors[job]) {
-            int s = LS[job] - problem.durations[pred];
-            if (s < LS[pred]) LS[pred] = s; // Use minimum values for determining critical paths
-            q.push(pred); // Enqueue predecessor
-        }
-    }
-
-    for (int i = 0; i < problem.njobs; i++) {
-        ES[i] = EC[i] - problem.durations[i];
-        LC[i] = LS[i] + problem.durations[i];
-    }
-
-    return true;
-}
 
 bool checkValid(const Problem& problem, const vector<int>& solution) {
     if (solution.empty()) return false;

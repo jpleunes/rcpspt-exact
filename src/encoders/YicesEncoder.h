@@ -25,7 +25,7 @@ SOFTWARE.
 
 #include <ctime>
 
-#include "../Problem.h"
+#include "Encoder.h"
 #include "yices.h"
 
 namespace RcpsptExact {
@@ -46,16 +46,9 @@ struct Measurements {
 /**
  * Abstract base class for encoders that use the Yices C API.
  */
-class YicesEncoder {
+class YicesEncoder : public Encoder {
 public:
     virtual ~YicesEncoder();
-
-    /**
-     * TODO
-     *
-     * @return
-     */
-    bool calcTimeWindows();
 
     virtual void encode() = 0;
     virtual vector<int> solve() = 0;
@@ -75,12 +68,6 @@ public:
 
 protected:
     YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m);
-
-    Problem& problem;
-
-    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
-
-    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
 
     term_t formula; // Formula that will be used when calling solve()
 };
