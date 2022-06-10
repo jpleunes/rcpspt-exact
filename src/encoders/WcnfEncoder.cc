@@ -78,12 +78,12 @@ void WcnfEncoder::encodeAndWriteToFile(const string& filePath) {
     // Write a file header in the form of comments, containing information for converting from
     // a SAT model to a solution for the original problem.
     // First write the number of start and process variables
-    outFile << "c " << ny << ' ' << nx << std::endl;
-    outFile << 'c' << std::endl;
+    outFile << "c " << ny << ' ' << nx << '\n';
+    outFile << 'c' << '\n';
     // Write the earliest and latest feasible start time for each activity
     for (int i = 0; i < problem.njobs; i++)
-        outFile << "c " << i+1 << ' ' << ES[i] << ' ' << LS[i] << std::endl;
-    outFile << 'c' << std::endl;
+        outFile << "c " << i+1 << ' ' << ES[i] << ' ' << LS[i] << '\n';
+    outFile << 'c' << '\n';
 
     // Add precedence constraints
 
@@ -225,9 +225,9 @@ void WcnfEncoder::encodeAndWriteToFile(const string& filePath) {
 
     int nbvar = nextIndex;
     int nbclauses = (int)precedenceConstrs.size() + (int)resourceConstrs.size(); // TODO: include soft clauses
-    outFile << "p wcnf " << nbvar << ' ' << nbclauses << ' ' << top << std::endl;
-    for (const string& ln : precedenceConstrs) outFile << ln << std::endl;
-    for (const string& ln : resourceConstrs) outFile << ln << std::endl;
+    outFile << "p wcnf " << nbvar << ' ' << nbclauses << ' ' << top << '\n';
+    for (const string& ln : precedenceConstrs) outFile << ln << '\n';
+    for (const string& ln : resourceConstrs) outFile << ln << '\n';
     // TODO: soft clauses
 
     outFile.close();

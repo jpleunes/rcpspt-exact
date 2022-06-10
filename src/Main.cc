@@ -103,6 +103,9 @@ int main(int argc, char** argv) {
         WcnfEncoder maxSatEnc(problem, bounds);
         maxSatEnc.encodeAndWriteToFile(outFilePath);
 
+        // Output total encoding time in milis
+        std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << std::endl;
+
         return 0;
     }
 
