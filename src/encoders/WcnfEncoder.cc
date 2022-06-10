@@ -221,14 +221,32 @@ void WcnfEncoder::encodeAndWriteToFile(const string& filePath) {
         for (BDD* node : nodes) if (!node->terminal()) delete node;
     }
 
+    // Add clauses to define the objective of minimising the makespan
+
+    vector<string> optClauses;
+
+    // Activity n+1 may only be scheduled once
+    for (int t = ES.back(); t <= LS.back(); t++) { // t in STW(n+1)
+        for (int u = ES.back(); u <= LS.back(); u++) { // u in STW(n+1)
+            if (t == u) continue;
+            optClauses.push_back(to_string(top) + " -" + to_string(1 + y.back()[-ES.back() + t]) + " -" + to_string(1 + y.back()[-ES.back() + u]) + " 0");
+        }
+    }
+
+    int currWeight = 1;
+    // Soft clauses: weight increases for not starting activity n+1 earlier
+    for (int t = LS.back(); t >= ES.back(); t--) { // t in STW(n+1)
+        optClauses.push_back(to_string(currWeight++) + ' ' + to_string(1 + y.back()[-ES.back() + t]) + " 0");
+    }
+
     // Write the encoded problem to the file
 
     int nbvar = nextIndex;
-    int nbclauses = (int)precedenceConstrs.size() + (int)resourceConstrs.size(); // TODO: include soft clauses
+    int nbclauses = (int)precedenceConstrs.size() + (int)resourceConstrs.size() + (int)optClauses.size();
     outFile << "p wcnf " << nbvar << ' ' << nbclauses << ' ' << top << '\n';
     for (const string& ln : precedenceConstrs) outFile << ln << '\n';
     for (const string& ln : resourceConstrs) outFile << ln << '\n';
-    // TODO: soft clauses
+    for (const string& ln : optClauses) outFile << ln << '\n';
 
     outFile.close();
 }
@@ -247,7 +265,7 @@ string WcnfEncoder::getAndCheckSolution(const string &model) {
     int curr = 0;
     for (int i = 0; i < problem.njobs; i++) {
         for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
-            if (lits[curr++]) starts[i] = t;
+            if (lits[curr++] && starts[i] == -1) starts[i] = t;
         }
     }
 
