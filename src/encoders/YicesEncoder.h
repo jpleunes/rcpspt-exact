@@ -30,7 +30,7 @@ SOFTWARE.
 
 namespace RcpsptExact {
 /**
- * TODO
+ * Struct containing all data points that are measured for the SMT and SAT approaches using Yices.
  */
 struct Measurements {
     string file; // Input file path

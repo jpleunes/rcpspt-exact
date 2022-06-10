@@ -39,9 +39,11 @@ public:
     WcnfEncoder(Problem& p, pair<int, int> bounds);
 
     /**
-     * TODO
+     * Encodes the problem into MAX-SAT, WCNF format, and writes this encoding to a file.
+     * The encoding is the same as the SAT encoding used by SatEncoder, except that soft clauses
+     * are added for specifying the objective function of minimising the makespan.
      *
-     * @param filePath
+     * @param filePath name of the file to write to
      */
     void encodeAndWriteToFile(const string& filePath);
 
@@ -59,9 +61,9 @@ private:
     bool preprocessFeasible;
 
     /**
-     * TODO
+     * Perform preprocessing to reduce the amount of variables in the final encoding.
      *
-     * @return
+     * @return false if preprocessing finds the instance to be infeasible, true otherwise
      */
     bool preprocess();
 

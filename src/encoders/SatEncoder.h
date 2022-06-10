@@ -59,7 +59,9 @@ public:
     /**
      * Finds the optimal solution by calling Yices repeatedly.
      * Starts with the given lower and upper bounds, and incrementally decreases the upper bound.
-     * TODO: explain interruption behaviour
+     *
+     * While Yices is searching and interruption signal (SIGTERM) can be sent, stopping the search.
+     * The best found solution so far can then be found in the Measurements struct.
      */
     void optimise() override;
 

@@ -36,9 +36,9 @@ public:
     virtual ~Encoder();
 
     /**
-     * TODO
+     * Calculates the earliest/latest start and close times for each activity.
      *
-     * @return
+     * @return true if all time windows lie within the predefined scheduling horizon, false otherwise
      */
     bool calcTimeWindows();
 
