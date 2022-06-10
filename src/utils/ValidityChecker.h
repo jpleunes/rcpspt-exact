@@ -1,4 +1,4 @@
-/***************************************************************************************[Encoder.h]
+/*******************************************************************************[ValidityChecker.h]
 Copyright (c) 2022, Jelle Pleunes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,37 +20,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
-#ifndef RCPSPT_EXACT_ENCODER_H
-#define RCPSPT_EXACT_ENCODER_H
+#ifndef RCPSPT_EXACT_VALIDITYCHECKER_H
+#define RCPSPT_EXACT_VALIDITYCHECKER_H
+
+#include <iostream>
 
 #include "../Problem.h"
-#include "../utils/ValidityChecker.h"
 
 namespace RcpsptExact {
 
-/**
- * Abstract base class for all encoders.
- */
-class Encoder {
+class ValidityChecker {
 public:
-    virtual ~Encoder();
-
-    /**
-     * TODO
-     *
-     * @return
-     */
-    bool calcTimeWindows();
-
-protected:
-    Encoder(Problem& p, pair<int,int> bounds);
-
-    Problem& problem;
-
-    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
-
-    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
+    static bool checkValid(const Problem &problem, const vector<int> &solution);
 };
 }
 
-#endif //RCPSPT_EXACT_ENCODER_H
+#endif //RCPSPT_EXACT_VALIDITYCHECKER_H

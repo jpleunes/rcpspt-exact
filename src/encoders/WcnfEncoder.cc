@@ -24,6 +24,8 @@ SOFTWARE.
 #include "ads/BDD.h"
 #include "ads/PBConstr.h"
 
+#include <sstream>
+
 using namespace RcpsptExact;
 
 WcnfEncoder::WcnfEncoder(Problem& p, pair<int,int> bounds)
@@ -35,7 +37,7 @@ bool WcnfEncoder::preprocess() {
     return calcTimeWindows();
 }
 
-void WcnfEncoder::encodeAndWriteToFile(string& filePath) {
+void WcnfEncoder::encodeAndWriteToFile(const string& filePath) {
     ofstream outFile(filePath);
     if (!preprocessFeasible) {
         writeInfeasible(outFile);
@@ -45,7 +47,7 @@ void WcnfEncoder::encodeAndWriteToFile(string& filePath) {
 
     int nextIndex = 0; // Index to be used by the next Boolean variable to be added
 
-    vector<vector<int>> y; // 1-indexed indices of Boolean start variables y_(i,t)
+    vector<vector<int>> y; // indices of Boolean start variables y_(i,t)
     int ny = 0;
     y.reserve(problem.njobs);
     for (int i = 0; i < problem.njobs; i++) {
@@ -55,7 +57,7 @@ void WcnfEncoder::encodeAndWriteToFile(string& filePath) {
             ny++;
         }
     }
-    vector<vector<int>> x; // 1-indexed indices of Boolean process variables x_(i,t)
+    vector<vector<int>> x; // indices of Boolean process variables x_(i,t)
     int nx = 0;
     x.reserve(problem.njobs);
     for (int i = 0; i < problem.njobs; i++) {
@@ -229,6 +231,32 @@ void WcnfEncoder::encodeAndWriteToFile(string& filePath) {
     // TODO: soft clauses
 
     outFile.close();
+}
+
+string WcnfEncoder::getAndCheckSolution(const string &model) {
+    if (!preprocessFeasible) return "-1, 1, ";
+
+    vector<bool> lits;
+    istringstream iss(model);
+    string substr;
+    while (getline(iss, substr, ' ')) {
+        lits.push_back(substr[0] != '-');
+    }
+
+    vector<int> starts(problem.njobs, -1);
+    int curr = 0;
+    for (int i = 0; i < problem.njobs; i++) {
+        for (int t = ES[i]; t <= LS[i]; t++) { // t in STW(i) (start time window of activity i)
+            if (lits[curr++]) starts[i] = t;
+        }
+    }
+
+    int makespan = starts.back();
+    bool valid = ValidityChecker::checkValid(problem, starts);
+
+    string output = to_string(makespan) + ", " + to_string(valid) + ", ";
+    for (int s : starts) output += to_string(s) + '.';
+    return output;
 }
 
 void WcnfEncoder::writeInfeasible(ofstream& outFile) {

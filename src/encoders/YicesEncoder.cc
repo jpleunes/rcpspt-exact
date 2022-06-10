@@ -34,47 +34,6 @@ YicesEncoder::YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
 
 YicesEncoder::~YicesEncoder() = default;
 
-bool checkValid(const Problem& problem, const vector<int>& solution) {
-    if (solution.empty()) return false;
-
-    // Initialize remaining resource availabilities
-    int** available = new int*[problem.nresources];
-    for (int k = 0; k < problem.nresources; k++) {
-        available[k] = new int[problem.horizon];
-        for (int t = 0; t < problem.horizon; t++)
-            available[k][t] = problem.capacities[k][t];
-    }
-
-    for (int job = 0; job < problem.njobs; job++) {
-        // Precedence constraints
-        for (int predecessor: problem.predecessors[job]) {
-            if (solution[job] < solution[predecessor] + problem.durations[predecessor]) {
-                std::cout << "invalid precedence!" << std::endl;
-                return false;
-            }
-        }
-    }
-
-    for (int job = 0; job < problem.njobs; job++) {
-        // Resource constraints
-        for (int k = 0; k < problem.nresources; k++) {
-            for (int t = 0; t < problem.durations[job]; t++) {
-                int curr = solution[job] + t;
-                available[k][curr] -= problem.requests[job][k][t];
-                if (available[k][curr] < 0) {
-                    std::cout << "resource demand exceeds availability at t=" << curr << '!' << std::endl;
-                    return false;
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < problem.nresources; i++) delete[] available[i];
-    delete[] available;
-
-    return true;
-}
-
 void YicesEncoder::printResults() const {
     std::cout << measurements->file << ", ";
     std::cout << measurements->enc_n_boolv << ", ";
@@ -85,7 +44,7 @@ void YicesEncoder::printResults() const {
     std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << ", ";
     if (measurements->schedule.empty()) std::cout << -1 << ", ";
     else std::cout << measurements->schedule.back() << ", ";
-    std::cout << checkValid(problem, measurements->schedule) << ", ";
+    std::cout << ValidityChecker::checkValid(problem, measurements->schedule) << ", ";
     std::cout << measurements->certified << ", ";
     for (int start : measurements->schedule) std::cout << start << ".";
     std::cout << std::endl;

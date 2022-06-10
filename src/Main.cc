@@ -56,6 +56,9 @@ int main(int argc, char** argv) {
 
     if (argc < 3) {
         std::cout << "Please provide the following arguments: encoder[smt/sat/maxsat] input[path_to_file] (for maxsat: output[file_name])" << std::endl;
+        std::cout << std::endl << "Alternatively, use the following arguments for converting from a MaxSAT model to a solution for the original problem:" << std::endl;
+        std::cout << "mod2sol problem[path_to_original_problem_file] model[path_to_model_file]" << std::endl;
+        std::cout << "Then the output will look as follows: [path_to_original_problem_file], [makespan], [valid (0/1)], [solution (example: 0.2.3.8.)]" << std::endl;
         return 1;
     }
 
@@ -64,9 +67,29 @@ int main(int argc, char** argv) {
     Measurements measurements;
     measurements.file = filePath;
 
-    std::ifstream inpFile(filePath);
+    ifstream inpFile(filePath);
     Problem problem = Parser::parseProblemInstance(inpFile);
     inpFile.close();
+
+    if ("mod2sol" == string(argv[1])) {
+        if (argc < 4) {
+            std::cout << "Please provide the following arguments: mod2sol problem[path_to_original_problem_file] model[path_to_model_file]" << std::endl;
+            return 1;
+        }
+
+        string modelFilePath = argv[3];
+        ifstream modelFile(modelFilePath);
+        string model;
+        getline(modelFile, model);
+
+        pair<int,int> bounds = calcBoundsPriorityRule(problem, measurements.schedule);
+        WcnfEncoder maxSatEnc(problem, bounds);
+        string output = maxSatEnc.getAndCheckSolution(model);
+
+        std::cout << filePath << ", " << output << std::endl;
+
+        return 0;
+    }
 
     if ("maxsat" == string(argv[1])) {
         if (argc < 4) {
