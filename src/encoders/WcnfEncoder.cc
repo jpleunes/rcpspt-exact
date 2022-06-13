@@ -278,8 +278,10 @@ string WcnfEncoder::getAndCheckSolution(const string &model) {
 }
 
 void WcnfEncoder::writeInfeasible(ofstream& outFile) {
-    outFile << "p wcnf 1 1 1" << std::endl;
-    outFile << "1 -1 0" << std::endl;
+    int top = INT32_MAX/2;
+    outFile << "p wcnf 1 2 " << to_string(top) << std::endl;
+    outFile << to_string(top) << " 1 0" << std::endl;
+    outFile << to_string(top) << " -1 0" << std::endl;
 }
 
 #include "WcnfEncoder.h"
