@@ -60,7 +60,9 @@ public:
     BDD* fBranch; // Child for the 'False' branch
     BDD* tBranch; // Child for the 'True' branch
 
-    term_t getAux(int* measure_bools);
+    term_t getAuxYices(int* measure_bools);
+
+    int getAuxWcnf(int* nextIndex);
 
     bool terminal() const;
 
@@ -73,7 +75,8 @@ public:
 private:
     int term; // Indicates whether the node is terminal: -1 not terminal, 0 terminal w/ val. False, 1 terminal w/ val. True
     bool visited; // Indicates whether the node has been visited (used for flatten(out))
-    term_t aux; // Auxiliary boolean variable used for creating a SAT encoding of an ROBDD
+    term_t auxYices; // Auxiliary Boolean variable used for creating a SAT encoding of an ROBDD (only for Yices encoders)
+    int auxWcnf; // Index of auxiliary Boolean variable used for creating a SAT encoding of an ROBDD (only for WCNF encoder)
 };
 
 /**

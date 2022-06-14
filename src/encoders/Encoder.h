@@ -1,4 +1,4 @@
-/*********************************************************************************[YicesEncoder.cc]
+/***************************************************************************************[Encoder.h]
 Copyright (c) 2022, Jelle Pleunes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,32 +20,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
-#include <iostream>
-#include <queue>
+#ifndef RCPSPT_EXACT_ENCODER_H
+#define RCPSPT_EXACT_ENCODER_H
 
-#include "YicesEncoder.h"
+#include "../Problem.h"
+#include "../utils/ValidityChecker.h"
 
-using namespace RcpsptExact;
+namespace RcpsptExact {
 
-YicesEncoder::YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
-        : Encoder(p, bounds) {
-    measurements = m;
+/**
+ * Abstract base class for all encoders.
+ */
+class Encoder {
+public:
+    virtual ~Encoder();
+
+    /**
+     * Calculates the earliest/latest start and close times for each activity.
+     *
+     * @return true if all time windows lie within the predefined scheduling horizon, false otherwise
+     */
+    bool calcTimeWindows();
+
+protected:
+    Encoder(Problem& p, pair<int,int> bounds);
+
+    Problem& problem;
+
+    int LB, UB; // The lower and upper bounds for the makespan that are currently being used
+
+    vector<int> ES, EC, LS, LC; // For each activity: earliest start, earliest close, latest start, and latest close time
+};
 }
 
-YicesEncoder::~YicesEncoder() = default;
-
-void YicesEncoder::printResults() const {
-    std::cout << measurements->file << ", ";
-    std::cout << measurements->enc_n_boolv << ", ";
-    std::cout << measurements->enc_n_intv << ", ";
-    std::cout << measurements->enc_n_clause << ", ";
-    std::cout << measurements->t_enc << ", ";
-    std::cout << measurements->t_search << ", ";
-    std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << ", ";
-    if (measurements->schedule.empty()) std::cout << -1 << ", ";
-    else std::cout << measurements->schedule.back() << ", ";
-    std::cout << ValidityChecker::checkValid(problem, measurements->schedule) << ", ";
-    std::cout << measurements->certified << ", ";
-    for (int start : measurements->schedule) std::cout << start << ".";
-    std::cout << std::endl;
-}
+#endif //RCPSPT_EXACT_ENCODER_H

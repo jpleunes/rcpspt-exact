@@ -1,4 +1,4 @@
-/*********************************************************************************[YicesEncoder.cc]
+/*******************************************************************************[ValidityChecker.h]
 Copyright (c) 2022, Jelle Pleunes
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,32 +20,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 **************************************************************************************************/
 
+#ifndef RCPSPT_EXACT_VALIDITYCHECKER_H
+#define RCPSPT_EXACT_VALIDITYCHECKER_H
+
 #include <iostream>
-#include <queue>
 
-#include "YicesEncoder.h"
+#include "../Problem.h"
 
-using namespace RcpsptExact;
+namespace RcpsptExact {
 
-YicesEncoder::YicesEncoder(Problem &p, pair<int, int> bounds, Measurements* m)
-        : Encoder(p, bounds) {
-    measurements = m;
+class ValidityChecker {
+public:
+    static bool checkValid(const Problem &problem, const vector<int> &solution);
+};
 }
 
-YicesEncoder::~YicesEncoder() = default;
-
-void YicesEncoder::printResults() const {
-    std::cout << measurements->file << ", ";
-    std::cout << measurements->enc_n_boolv << ", ";
-    std::cout << measurements->enc_n_intv << ", ";
-    std::cout << measurements->enc_n_clause << ", ";
-    std::cout << measurements->t_enc << ", ";
-    std::cout << measurements->t_search << ", ";
-    std::cout << (long)(clock() * 1000 / CLOCKS_PER_SEC) << ", ";
-    if (measurements->schedule.empty()) std::cout << -1 << ", ";
-    else std::cout << measurements->schedule.back() << ", ";
-    std::cout << ValidityChecker::checkValid(problem, measurements->schedule) << ", ";
-    std::cout << measurements->certified << ", ";
-    for (int start : measurements->schedule) std::cout << start << ".";
-    std::cout << std::endl;
-}
+#endif //RCPSPT_EXACT_VALIDITYCHECKER_H
