@@ -1,4 +1,7 @@
 # SMT/SAT Encoder for Exact Solving of the RCPSP/t
+This repository is part of the [Research Project](https://github.com/TU-Delft-CSE/Research-Project) (2022) of [TU Delft](https://https//github.com/TU-Delft-CSE).
+The implementations were written for a bachelor thesis on "SAT-based optimisation for the resource-constrained project scheduling problem with time-dependent resource capacities and requests" by Jelle Pleunes, supervised by Emir Demirović.
+
 Encoder for the Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests.
 Encodes a problem instance into SMT or SAT using the C API provided by Yices 2 ([SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml)), or into MaxSAT (WCNF file format).
 For the SMT and SAT approaches this program optimises by calling the Yices solver.
