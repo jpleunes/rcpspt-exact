@@ -1,7 +1,9 @@
 # SMT/SAT Encoder for Exact Solving of the RCPSP/t
-TODO: update
-Encodes a problem instance into the [SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml) using the C API provided by Yices 2, or into CNF (DIMACS format).
-This facilitates exact solving of the RCPSP/t (Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests) using SAT solvers.
+Encoder for the Resource-Constrained Project Scheduling Problem with Time-Dependent Resource Capacities and Requests.
+Encodes a problem instance into SMT or SAT using the C API provided by Yices 2 ([SMT2 language](http://smtlib.cs.uiowa.edu/language.shtml)), or into MaxSAT (WCNF file format).
+For the SMT and SAT approaches this program optimises by calling the Yices solver.
+For the MaxSAT approach this program writes the encoding to a file.
+This encoded instance can then be solved using a MaxSAT solver, after which this program can convert the model from the solver back to a solution vector for the RCPSP/t.
 
 ## Test Data
 Test instances that can be parsed by this implementation can be downloaded from http://www.om-db.wi.tum.de/psplib/newinstances.html.
